@@ -1,12 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { EmployeeDashboard } from "@/components/employee/EmployeeDashboard";
+import { CEODashboard } from "@/components/ceo/CEODashboard";
+
+export type UserRole = "employee" | "ceo" | null;
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
 
 const Index = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
+
+  if (!currentUser) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {currentUser.role === "employee" ? (
+        <EmployeeDashboard user={currentUser} onLogout={handleLogout} />
+      ) : (
+        <CEODashboard user={currentUser} onLogout={handleLogout} />
+      )}
     </div>
   );
 };
