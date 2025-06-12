@@ -1,9 +1,11 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CheckCircle, Clock, AlertCircle, Eye } from "lucide-react";
+import { EmployeeDetailModal } from "../shared/EmployeeDetailModal";
 
 const mockEmployees = [
   {
@@ -54,6 +56,14 @@ const mockEmployees = [
 ];
 
 export const TeamOverview = () => {
+  const [selectedEmployee, setSelectedEmployee] = useState<typeof mockEmployees[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewEmployee = (employee: typeof mockEmployees[0]) => {
+    setSelectedEmployee(employee);
+    setIsModalOpen(true);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "submitted":
@@ -116,7 +126,12 @@ export const TeamOverview = () => {
                     {getStatusBadge(employee.status)}
                   </div>
                   
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => handleViewEmployee(employee)}
+                  >
                     <Eye className="w-3 h-3" />
                     View
                   </Button>
@@ -126,6 +141,12 @@ export const TeamOverview = () => {
           </div>
         </CardContent>
       </Card>
+
+      <EmployeeDetailModal
+        employee={selectedEmployee}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };

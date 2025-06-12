@@ -24,11 +24,24 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setTimeout(() => {
       // Demo login logic
       const isCEO = email.includes("ceo") || email.includes("admin");
+      const isDeveloper = email.includes("dev") || email.includes("admin@");
+      
+      let role: "employee" | "ceo" | "developer" = "employee";
+      let name = "John Smith";
+      
+      if (isDeveloper) {
+        role = "developer";
+        name = "Admin User";
+      } else if (isCEO) {
+        role = "ceo";
+        name = "Sarah Johnson";
+      }
+      
       const user: User = {
         id: "demo-" + Date.now(),
-        name: isCEO ? "Sarah Johnson" : "John Smith",
+        name,
         email,
-        role: isCEO ? "ceo" : "employee",
+        role,
       };
       onLogin(user);
       setIsLoading(false);
@@ -99,6 +112,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
               <div className="text-sm text-blue-700 space-y-1">
                 <p><strong>Employee:</strong> employee@company.com</p>
                 <p><strong>CEO:</strong> ceo@company.com</p>
+                <p><strong>Developer:</strong> admin@company.com</p>
                 <p className="text-xs text-blue-600 mt-2">Use any password to login</p>
               </div>
             </div>

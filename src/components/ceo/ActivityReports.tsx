@@ -1,8 +1,10 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Calendar, Mail, FileText, TrendingUp } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const mockReports = [
   {
@@ -35,6 +37,42 @@ const mockReports = [
 ];
 
 export const ActivityReports = () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
+
+  const handleGenerateReport = async (type: string) => {
+    setIsGenerating(true);
+    toast({
+      title: "Generating Report",
+      description: `Creating ${type.toLowerCase()}...`,
+    });
+    
+    // Simulate report generation
+    setTimeout(() => {
+      setIsGenerating(false);
+      toast({
+        title: "Report Generated",
+        description: `${type} has been generated successfully.`,
+      });
+    }, 2000);
+  };
+
+  const handleDownloadReport = (reportId: number) => {
+    const report = mockReports.find(r => r.id === reportId);
+    toast({
+      title: "Download Started",
+      description: `Downloading ${report?.type} from ${report?.date}`,
+    });
+    // In a real app, this would trigger actual file download
+  };
+
+  const handleSendReminders = () => {
+    toast({
+      title: "Reminders Sent",
+      description: "Email reminders have been sent to employees with pending submissions.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Quick Actions */}
@@ -50,15 +88,29 @@ export const ActivityReports = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button className="h-12 flex items-center gap-2" variant="outline">
+            <Button 
+              className="h-12 flex items-center gap-2" 
+              variant="outline"
+              onClick={() => handleGenerateReport("Daily Report")}
+              disabled={isGenerating}
+            >
               <FileText className="w-4 h-4" />
               Daily Report
             </Button>
-            <Button className="h-12 flex items-center gap-2" variant="outline">
+            <Button 
+              className="h-12 flex items-center gap-2" 
+              variant="outline"
+              onClick={() => handleGenerateReport("Weekly Summary")}
+              disabled={isGenerating}
+            >
               <Calendar className="w-4 h-4" />
               Weekly Summary
             </Button>
-            <Button className="h-12 flex items-center gap-2" variant="outline">
+            <Button 
+              className="h-12 flex items-center gap-2" 
+              variant="outline"
+              onClick={handleSendReminders}
+            >
               <Mail className="w-4 h-4" />
               Send Reminders
             </Button>
@@ -103,7 +155,12 @@ export const ActivityReports = () => {
                     {report.status}
                   </Badge>
                   
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => handleDownloadReport(report.id)}
+                  >
                     <Download className="w-3 h-3" />
                     Download
                   </Button>

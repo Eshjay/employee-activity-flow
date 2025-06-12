@@ -11,6 +11,19 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "ceo":
+        return <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200">Executive</Badge>;
+      case "developer":
+        return <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Developer</Badge>;
+      case "employee":
+        return <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">Employee</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -37,12 +50,7 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
               <div className="text-right">
                 <p className="text-sm font-semibold text-slate-800">{user.name}</p>
                 <div className="flex items-center gap-2">
-                  <Badge 
-                    variant="outline" 
-                    className={user.role === "ceo" ? "bg-purple-100 text-purple-700 border-purple-200" : "bg-blue-100 text-blue-700 border-blue-200"}
-                  >
-                    {user.role === "ceo" ? "Executive" : "Employee"}
-                  </Badge>
+                  {getRoleBadge(user.role || "employee")}
                 </div>
               </div>
             </div>
