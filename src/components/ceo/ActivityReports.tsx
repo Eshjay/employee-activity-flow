@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Calendar, Mail, FileText, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { generateDailyReport, generateWeeklyReport } from "@/utils/downloadUtils";
+import { sendDailyReminders, sendWeeklyReport } from "@/utils/emailUtils";
 
 const mockReports = [
   {
@@ -38,6 +40,7 @@ const mockReports = [
 
 export const ActivityReports = () => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
   const { toast } = useToast();
 
   const handleGenerateReport = async (type: string) => {
@@ -47,30 +50,71 @@ export const ActivityReports = () => {
       description: `Creating ${type.toLowerCase()}...`,
     });
     
-    // Simulate report generation
+    // Simulate report generation delay
     setTimeout(() => {
-      setIsGenerating(false);
-      toast({
-        title: "Report Generated",
-        description: `${type} has been generated successfully.`,
-      });
+      try {
+        if (type === "Daily Report") {
+          generateDailyReport();
+        } else if (type === "Weekly Summary") {
+          generateWeeklyReport();
+        }
+        
+        setIsGenerating(false);
+        toast({
+          title: "Report Generated",
+          description: `${type} has been generated and downloaded successfully.`,
+        });
+      } catch (error) {
+        setIsGenerating(false);
+        toast({
+          title: "Error",
+          description: "Failed to generate report. Please try again.",
+          variant: "destructive",
+        });
+      }
     }, 2000);
   };
 
   const handleDownloadReport = (reportId: number) => {
     const report = mockReports.find(r => r.id === reportId);
+    if (!report) return;
+
+    if (report.type === "Daily Report") {
+      generateDailyReport();
+    } else if (report.type === "Weekly Summary") {
+      generateWeeklyReport();
+    }
+
     toast({
       title: "Download Started",
-      description: `Downloading ${report?.type} from ${report?.date}`,
+      description: `Downloading ${report.type} from ${report.date}`,
     });
-    // In a real app, this would trigger actual file download
   };
 
-  const handleSendReminders = () => {
+  const handleSendReminders = async () => {
+    setIsSendingEmails(true);
     toast({
-      title: "Reminders Sent",
-      description: "Email reminders have been sent to employees with pending submissions.",
+      title: "Sending Reminders",
+      description: "Sending email reminders to employees...",
     });
+
+    try {
+      const success = await sendDailyReminders();
+      if (success) {
+        toast({
+          title: "Reminders Sent",
+          description: "Email reminders have been sent to employees with pending submissions.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send reminders. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmails(false);
+    }
   };
 
   return (
@@ -110,9 +154,10 @@ export const ActivityReports = () => {
               className="h-12 flex items-center gap-2" 
               variant="outline"
               onClick={handleSendReminders}
+              disabled={isSendingEmails}
             >
               <Mail className="w-4 h-4" />
-              Send Reminders
+              {isSendingEmails ? "Sending..." : "Send Reminders"}
             </Button>
           </div>
         </CardContent>

@@ -8,63 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Edit, Trash2, Search } from "lucide-react";
+import { UserPlus, Edit, Trash2, Search, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface SystemUser {
-  id: string;
-  name: string;
-  email: string;
-  role: "employee" | "ceo" | "developer";
-  status: "active" | "inactive";
-  lastLogin: string;
-  department: string;
-}
-
-const mockUsers: SystemUser[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    email: "ceo@company.com",
-    role: "ceo",
-    status: "active",
-    lastLogin: "2024-06-12",
-    department: "Executive"
-  },
-  {
-    id: "2",
-    name: "John Smith",
-    email: "john@company.com",
-    role: "employee",
-    status: "active",
-    lastLogin: "2024-06-12",
-    department: "Development"
-  },
-  {
-    id: "3",
-    name: "Emma Davis",
-    email: "emma@company.com",
-    role: "employee",
-    status: "active",
-    lastLogin: "2024-06-11",
-    department: "Design"
-  },
-  {
-    id: "4",
-    name: "Admin User",
-    email: "admin@company.com",
-    role: "developer",
-    status: "active",
-    lastLogin: "2024-06-12",
-    department: "IT"
-  }
-];
+import { useUserStore } from "@/hooks/useUserStore";
+import { PasswordDialog } from "../shared/PasswordDialog";
 
 export const UserManagement = () => {
-  const [users, setUsers] = useState<SystemUser[]>(mockUsers);
+  const { users, addUser, updateUser, deleteUser } = useUserStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [passwordUser, setPasswordUser] = useState<{id: string, name: string} | null>(null);
   const { toast } = useToast();
 
   const [newUser, setNewUser] = useState({
@@ -109,31 +63,24 @@ export const UserManagement = () => {
       return;
     }
 
-    const user: SystemUser = {
-      id: Date.now().toString(),
-      ...newUser,
-      status: "active",
-      lastLogin: "Never"
-    };
-
-    setUsers([...users, user]);
+    const user = addUser(newUser);
     setNewUser({ name: "", email: "", role: "employee", department: "" });
     setIsAddUserOpen(false);
     
     toast({
       title: "User Added",
-      description: `${user.name} has been added successfully.`,
+      description: `${user.name} has been added successfully. Don't forget to set their password.`,
     });
   };
 
-  const handleEditUser = (user: SystemUser) => {
+  const handleEditUser = (user: any) => {
     setEditingUser(user);
   };
 
   const handleUpdateUser = () => {
     if (!editingUser) return;
 
-    setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+    updateUser(editingUser.id, editingUser);
     setEditingUser(null);
     
     toast({
@@ -143,11 +90,15 @@ export const UserManagement = () => {
   };
 
   const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter(u => u.id !== userId));
+    deleteUser(userId);
     toast({
       title: "User Deleted",
       description: "User has been removed from the system.",
     });
+  };
+
+  const handleSetPassword = (userId: string, userName: string) => {
+    setPasswordUser({ id: userId, name: userName });
   };
 
   return (
@@ -267,6 +218,13 @@ export const UserManagement = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => handleSetPassword(user.id, user.name)}
+                    >
+                      <Key className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handleEditUser(user)}
                     >
                       <Edit className="w-3 h-3" />
@@ -343,6 +301,16 @@ export const UserManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Password Dialog */}
+      {passwordUser && (
+        <PasswordDialog
+          userId={passwordUser.id}
+          userName={passwordUser.name}
+          isOpen={!!passwordUser}
+          onClose={() => setPasswordUser(null)}
+        />
+      )}
     </div>
   );
 };

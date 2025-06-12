@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "@/pages/Index";
 import { Building2, Users } from "lucide-react";
+import { useUserStore } from "@/hooks/useUserStore";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginFormProps {
   onLogin: (user: User) => void;
@@ -15,35 +17,33 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { validateLogin } = useUserStore();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
+    // Simulate API call delay
     setTimeout(() => {
-      // Demo login logic
-      const isCEO = email.includes("ceo") || email.includes("admin");
-      const isDeveloper = email.includes("dev") || email.includes("admin@");
+      const user = validateLogin(email, password);
       
-      let role: "employee" | "ceo" | "developer" = "employee";
-      let name = "John Smith";
-      
-      if (isDeveloper) {
-        role = "developer";
-        name = "Admin User";
-      } else if (isCEO) {
-        role = "ceo";
-        name = "Sarah Johnson";
+      if (user) {
+        // Convert SystemUser to User format
+        const loginUser: User = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
+        onLogin(loginUser);
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
       }
-      
-      const user: User = {
-        id: "demo-" + Date.now(),
-        name,
-        email,
-        role,
-      };
-      onLogin(user);
       setIsLoading(false);
     }, 1500);
   };
@@ -113,7 +113,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 <p><strong>Employee:</strong> employee@company.com</p>
                 <p><strong>CEO:</strong> ceo@company.com</p>
                 <p><strong>Developer:</strong> admin@company.com</p>
-                <p className="text-xs text-blue-600 mt-2">Use any password to login</p>
+                <p className="text-xs text-blue-600 mt-2">Password: password123</p>
               </div>
             </div>
           </CardContent>
