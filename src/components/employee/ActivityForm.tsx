@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { PlusCircle, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ActivityFormProps {
   onSubmitted: () => void;
@@ -20,13 +22,37 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
   const [timeEnded, setTimeEnded] = useState("");
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { profile } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!profile) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to submit activities.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .insert({
+          user_id: profile.id,
+          title,
+          description,
+          time_started: timeStarted || null,
+          time_ended: timeEnded || null,
+          comments: comments || null,
+          date: new Date().toISOString().split('T')[0] // Today's date
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Activity Logged Successfully!",
         description: "Your daily activity has been recorded and will be included in today's report.",
@@ -40,8 +66,16 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
       setComments("");
       
       onSubmitted();
+    } catch (error: any) {
+      console.error('Error submitting activity:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit activity. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

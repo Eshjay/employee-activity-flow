@@ -1,42 +1,35 @@
 
-import { useState } from "react";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { useAuth } from "@/hooks/useAuth";
 import { EmployeeDashboard } from "@/components/employee/EmployeeDashboard";
 import { CEODashboard } from "@/components/ceo/CEODashboard";
 import { DeveloperDashboard } from "@/components/developer/DeveloperDashboard";
 
-export type UserRole = "employee" | "ceo" | "developer" | null;
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
-
 const Index = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { profile, signOut } = useAuth();
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-  };
-
-  if (!currentUser) {
-    return <LoginForm onLogin={handleLogin} />;
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading profile...</div>
+      </div>
+    );
   }
+
+  const user = {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    role: profile.role
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {currentUser.role === "employee" ? (
-        <EmployeeDashboard user={currentUser} onLogout={handleLogout} />
-      ) : currentUser.role === "ceo" ? (
-        <CEODashboard user={currentUser} onLogout={handleLogout} />
+      {profile.role === "employee" ? (
+        <EmployeeDashboard user={user} onLogout={signOut} />
+      ) : profile.role === "ceo" ? (
+        <CEODashboard user={user} onLogout={signOut} />
       ) : (
-        <DeveloperDashboard user={currentUser} onLogout={handleLogout} />
+        <DeveloperDashboard user={user} onLogout={signOut} />
       )}
     </div>
   );

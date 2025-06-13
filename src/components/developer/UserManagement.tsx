@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,15 +10,25 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, Edit, Trash2, Search, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useUserStore } from "@/hooks/useUserStore";
-import { PasswordDialog } from "../shared/PasswordDialog";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  role: "employee" | "ceo" | "developer";
+  department: string;
+  status: string;
+  last_login: string | null;
+  created_at: string;
+}
 
 export const UserManagement = () => {
-  const { users, addUser, updateUser, deleteUser } = useUserStore();
+  const [users, setUsers] = useState<Profile[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [passwordUser, setPasswordUser] = useState<{id: string, name: string} | null>(null);
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const [newUser, setNewUser] = useState({
@@ -27,6 +37,32 @@ export const UserManagement = () => {
     role: "employee" as const,
     department: ""
   });
+
+  // Fetch users from Supabase
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch users.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,7 +89,7 @@ export const UserManagement = () => {
       : <Badge className="bg-gray-100 text-gray-700 border-gray-200">Inactive</Badge>;
   };
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.department) {
       toast({
         title: "Error",
@@ -63,43 +99,91 @@ export const UserManagement = () => {
       return;
     }
 
-    const user = addUser(newUser);
-    setNewUser({ name: "", email: "", role: "employee", department: "" });
-    setIsAddUserOpen(false);
-    
-    toast({
-      title: "User Added",
-      description: `${user.name} has been added successfully. Don't forget to set their password.`,
-    });
+    try {
+      // For now, we'll just show a message that the user needs to sign up
+      // In a real application, you might want to send an invitation email
+      toast({
+        title: "User Invitation",
+        description: `Please ask ${newUser.name} to sign up at the authentication page with email: ${newUser.email}`,
+      });
+      
+      setNewUser({ name: "", email: "", role: "employee", department: "" });
+      setIsAddUserOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add user.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: Profile) => {
     setEditingUser(user);
   };
 
-  const handleUpdateUser = () => {
+  const handleUpdateUser = async () => {
     if (!editingUser) return;
 
-    updateUser(editingUser.id, editingUser);
-    setEditingUser(null);
-    
-    toast({
-      title: "User Updated",
-      description: `${editingUser.name} has been updated successfully.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: editingUser.name,
+          email: editingUser.email,
+          role: editingUser.role,
+          department: editingUser.department
+        })
+        .eq('id', editingUser.id);
+
+      if (error) throw error;
+
+      await fetchUsers(); // Refresh the list
+      setEditingUser(null);
+      
+      toast({
+        title: "User Updated",
+        description: `${editingUser.name} has been updated successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    deleteUser(userId);
-    toast({
-      title: "User Deleted",
-      description: "User has been removed from the system.",
-    });
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      await fetchUsers(); // Refresh the list
+      toast({
+        title: "User Deleted",
+        description: "User has been removed from the system.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete user.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSetPassword = (userId: string, userName: string) => {
-    setPasswordUser({ id: userId, name: userName });
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-lg">Loading users...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -117,14 +201,14 @@ export const UserManagement = () => {
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2">
                   <UserPlus className="w-4 h-4" />
-                  Add User
+                  Invite User
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogTitle>Invite New User</DialogTitle>
                   <DialogDescription>
-                    Create a new user account with appropriate role and permissions
+                    Provide user details. They will need to sign up with the specified email.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -170,7 +254,7 @@ export const UserManagement = () => {
                     />
                   </div>
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={handleAddUser} className="flex-1">Add User</Button>
+                    <Button onClick={handleAddUser} className="flex-1">Send Invitation</Button>
                     <Button variant="outline" onClick={() => setIsAddUserOpen(false)} className="flex-1">Cancel</Button>
                   </div>
                 </div>
@@ -206,7 +290,9 @@ export const UserManagement = () => {
                   <div>
                     <h3 className="font-semibold text-slate-800">{user.name}</h3>
                     <p className="text-sm text-slate-600">{user.email}</p>
-                    <p className="text-xs text-slate-500">{user.department} • Last login: {user.lastLogin}</p>
+                    <p className="text-xs text-slate-500">
+                      {user.department} • Last login: {user.last_login || 'Never'}
+                    </p>
                   </div>
                 </div>
                 
@@ -215,13 +301,6 @@ export const UserManagement = () => {
                   {getStatusBadge(user.status)}
                   
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleSetPassword(user.id, user.name)}
-                    >
-                      <Key className="w-3 h-3" />
-                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -301,16 +380,6 @@ export const UserManagement = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Password Dialog */}
-      {passwordUser && (
-        <PasswordDialog
-          userId={passwordUser.id}
-          userName={passwordUser.name}
-          isOpen={!!passwordUser}
-          onClose={() => setPasswordUser(null)}
-        />
-      )}
     </div>
   );
 };
