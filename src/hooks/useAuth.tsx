@@ -39,7 +39,7 @@ export const useAuth = () => {
                   id: profileData.id,
                   name: profileData.name,
                   email: profileData.email,
-                  role: profileData.role,
+                  role: profileData.role as "employee" | "ceo" | "developer",
                   department: profileData.department
                 });
               }
@@ -74,7 +74,7 @@ export const useAuth = () => {
                 id: profileData.id,
                 name: profileData.name,
                 email: profileData.email,
-                role: profileData.role,
+                role: profileData.role as "employee" | "ceo" | "developer",
                 department: profileData.department
               });
             }

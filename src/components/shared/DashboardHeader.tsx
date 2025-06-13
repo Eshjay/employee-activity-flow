@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User } from "@/pages/Index";
 import { LogOut, Building2 } from "lucide-react";
+import type { User } from "@/types/user";
 
 interface DashboardHeaderProps {
   user: User;

@@ -1,13 +1,12 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "@/pages/Index";
 import { Building2, Users } from "lucide-react";
 import { useUserStore } from "@/hooks/useUserStore";
 import { useToast } from "@/hooks/use-toast";
+import type { User } from "@/types/user";
 
 interface LoginFormProps {
   onLogin: (user: User) => void;

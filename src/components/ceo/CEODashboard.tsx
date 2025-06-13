@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "@/pages/Index";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { TeamOverview } from "./TeamOverview";
 import { ActivityReports } from "./ActivityReports";
 import { BarChart3, Users, TrendingUp, Calendar } from "lucide-react";
+import type { User } from "@/types/user";
 
 interface CEODashboardProps {
   user: User;

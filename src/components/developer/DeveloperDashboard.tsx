@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "@/pages/Index";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { UserManagement } from "./UserManagement";
 import { SystemSettings } from "./SystemSettings";
 import { Users, Settings, Database, Shield } from "lucide-react";
+import type { User } from "@/types/user";
 
 interface DeveloperDashboardProps {
   user: User;

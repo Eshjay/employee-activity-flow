@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "@/pages/Index";
 import { ActivityForm } from "./ActivityForm";
 import { ActivityHistory } from "./ActivityHistory";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { CheckCircle, Clock, Calendar } from "lucide-react";
+import type { User } from "@/types/user";
 
 interface EmployeeDashboardProps {
   user: User;
