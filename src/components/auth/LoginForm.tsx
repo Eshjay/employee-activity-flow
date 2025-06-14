@@ -3,121 +3,211 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users } from "lucide-react";
-import { useUserStore } from "@/hooks/useUserStore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { User } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
+import { PasswordResetForm } from "./PasswordResetForm";
 
-interface LoginFormProps {
-  onLogin: (user: User) => void;
-}
-
-export const LoginForm = ({ onLogin }: LoginFormProps) => {
+export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { validateLogin } = useUserStore();
+  const [name, setName] = useState("");
+  const [department, setDepartment] = useState("");
+  const [role, setRole] = useState("employee");
+  const [loading, setLoading] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      const user = validateLogin(email, password);
-      
-      if (user) {
-        // Convert SystemUser to User format
-        const loginUser: User = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
-        onLogin(loginUser);
-      } else {
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
         toast({
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
+          title: "Error",
+          description: error.message,
           variant: "destructive",
         });
+      } else {
+        toast({
+          title: "Success",
+          description: "Signed in successfully!",
+        });
       }
-      setIsLoading(false);
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign in. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Header */}
-        <div className="text-center text-white">
-          <div className="mx-auto w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm">
-            <Building2 className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-bold">Activity Tracker</h1>
-          <p className="text-blue-100 mt-2">Track your daily work activities</p>
-        </div>
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-        {/* Login Card */}
-        <Card className="backdrop-blur-sm bg-white/95 shadow-2xl border-0">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-semibold text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center">
-              Enter your credentials to access your dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            department,
+            role,
+          },
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Signed up successfully! Please check your email to verify your account.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign up. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showPasswordReset) {
+    return <PasswordResetForm onBackToLogin={() => setShowPasswordReset(false)} />;
+  }
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold">Activity Tracker</CardTitle>
+        <CardDescription>
+          Sign in to your account or create a new one
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="signin" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="signin">
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div>
+                <Label htmlFor="signin-email">Email</Label>
                 <Input
-                  id="email"
+                  id="signin-email"
                   type="email"
-                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
                   required
-                  className="h-11"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              
+              <div>
+                <Label htmlFor="signin-password">Password</Label>
                 <Input
-                  id="password"
+                  id="signin-password"
                   type="password"
-                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
                   required
-                  className="h-11"
                 />
               </div>
+              
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing In..." : "Sign In"}
+              </Button>
+              
               <Button 
-                type="submit" 
-                className="w-full h-11 bg-blue-600 hover:bg-blue-700 transition-colors"
-                disabled={isLoading}
+                type="button"
+                variant="link" 
+                onClick={() => setShowPasswordReset(true)}
+                className="w-full text-sm"
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                Forgot your password?
               </Button>
             </form>
-            
-            {/* Demo accounts */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Demo Accounts
-              </h4>
-              <div className="text-sm text-blue-700 space-y-1">
-                <p><strong>Employee:</strong> employee@company.com</p>
-                <p><strong>CEO:</strong> ceo@company.com</p>
-                <p><strong>Developer:</strong> admin@company.com</p>
-                <p className="text-xs text-blue-600 mt-2">Password: password123</p>
+          </TabsContent>
+          
+          <TabsContent value="signup">
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div>
+                <Label htmlFor="signup-email">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              
+              <div>
+                <Label htmlFor="signup-password">Password</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="signup-name">Full Name</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="signup-department">Department</Label>
+                <Input
+                  id="signup-department"
+                  type="text"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="Enter your department"
+                  required
+                />
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing Up..." : "Sign Up"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };

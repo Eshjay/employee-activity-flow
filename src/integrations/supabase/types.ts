@@ -98,6 +98,33 @@ export type Database = {
           },
         ]
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -139,6 +166,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_reset_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       is_developer: {
         Args: Record<PropertyKey, never>
         Returns: boolean
