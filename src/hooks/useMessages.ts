@@ -19,7 +19,10 @@ export const useMessages = (currentUserId?: string) => {
   const { toast } = useToast();
 
   const fetchMessages = async () => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      setLoading(false);
+      return;
+    }
     
     try {
       const { data, error } = await supabase
@@ -28,8 +31,24 @@ export const useMessages = (currentUserId?: string) => {
         .or(`sender_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (error) {
+        console.error('Error fetching messages:', error);
+        if (error.message.includes('RLS') || error.message.includes('policy')) {
+          toast({
+            title: "Access Restricted",
+            description: "You can only view your own messages due to security policies.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to fetch messages.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setMessages(data || []);
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast({
@@ -55,7 +74,23 @@ export const useMessages = (currentUserId?: string) => {
           content,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        if (error.message.includes('RLS') || error.message.includes('policy')) {
+          toast({
+            title: "Access Denied",
+            description: "You can only send messages as yourself due to security policies.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to send message.",
+            variant: "destructive",
+          });
+        }
+        return false;
+      }
       
       await fetchMessages(); // Refresh messages
       return true;
@@ -78,13 +113,22 @@ export const useMessages = (currentUserId?: string) => {
         .eq('id', messageId)
         .eq('recipient_id', currentUserId);
 
-      if (error) throw error;
-      
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId ? { ...msg, is_read: true } : msg
-        )
-      );
+      if (error) {
+        console.error('Error marking message as read:', error);
+        if (!error.message.includes('RLS') && !error.message.includes('policy')) {
+          toast({
+            title: "Error",
+            description: "Failed to mark message as read.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === messageId ? { ...msg, is_read: true } : msg
+          )
+        );
+      }
     } catch (error) {
       console.error('Error marking message as read:', error);
     }

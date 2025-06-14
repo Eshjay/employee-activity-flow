@@ -17,41 +17,54 @@ export const useAuth = () => {
   const [profile, setProfile] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      if (profileData) {
+        return {
+          id: profileData.id,
+          name: profileData.name,
+          email: profileData.email,
+          role: profileData.role as "employee" | "ceo" | "developer",
+          department: profileData.department
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile after auth state change
+          // Defer profile fetching to avoid potential deadlocks
           setTimeout(async () => {
-            try {
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-              
-              if (profileData) {
-                setProfile({
-                  id: profileData.id,
-                  name: profileData.name,
-                  email: profileData.email,
-                  role: profileData.role as "employee" | "ceo" | "developer",
-                  department: profileData.department
-                });
-              }
-            } catch (error) {
-              console.error('Error fetching profile:', error);
-            }
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
+            setLoading(false);
           }, 0);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -62,25 +75,8 @@ export const useAuth = () => {
       
       if (session?.user) {
         setTimeout(async () => {
-          try {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (profileData) {
-              setProfile({
-                id: profileData.id,
-                name: profileData.name,
-                email: profileData.email,
-                role: profileData.role as "employee" | "ceo" | "developer",
-                department: profileData.department
-              });
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-          }
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
           setLoading(false);
         }, 0);
       } else {
