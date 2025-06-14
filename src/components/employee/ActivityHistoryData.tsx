@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, FileText, Plus } from "lucide-react";
-import { useActivities } from "@/hooks/useActivities";
+import { useActivities, type Activity } from "@/hooks/useActivities";
 import { useAuth } from "@/hooks/useAuth";
 
 export const ActivityHistoryData = () => {
   const { profile } = useAuth();
   const { fetchUserActivities } = useActivities();
-  const [userActivities, setUserActivities] = useState<any[]>([]);
+  const [userActivities, setUserActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export const ActivityHistoryData = () => {
     }
     groups[date].push(activity);
     return groups;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, Activity[]>);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

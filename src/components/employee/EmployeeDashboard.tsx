@@ -111,10 +111,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
 
         {/* Tab Content */}
         {activeTab === "log" ? (
-          <ActivityForm 
-            onSubmitted={handleActivitySubmitted} 
-            hasSubmittedToday={hasSubmittedToday}
-          />
+          <ActivityForm />
         ) : (
           <ActivityHistoryData />
         )}
