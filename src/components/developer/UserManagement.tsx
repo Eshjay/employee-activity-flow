@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,17 +12,6 @@ import { UserPlus, Edit, Trash2, Search, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile } from "@/types/user";
-
-interface Profile {
-  id: string;
-  name: string;
-  email: string;
-  role: "employee" | "ceo" | "developer";
-  department: string;
-  status: string;
-  last_login: string | null;
-  created_at: string;
-}
 
 export const UserManagement = () => {
   const [users, setUsers] = useState<Profile[]>([]);
