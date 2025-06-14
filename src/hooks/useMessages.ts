@@ -33,19 +33,11 @@ export const useMessages = (currentUserId?: string) => {
 
       if (error) {
         console.error('Error fetching messages:', error);
-        if (error.message.includes('RLS') || error.message.includes('policy')) {
-          toast({
-            title: "Access Restricted",
-            description: "You can only view your own messages due to security policies.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to fetch messages.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Error",
+          description: "Failed to fetch messages.",
+          variant: "destructive",
+        });
       } else {
         setMessages(data || []);
       }
@@ -76,23 +68,19 @@ export const useMessages = (currentUserId?: string) => {
 
       if (error) {
         console.error('Error sending message:', error);
-        if (error.message.includes('RLS') || error.message.includes('policy')) {
-          toast({
-            title: "Access Denied",
-            description: "You can only send messages as yourself due to security policies.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to send message.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Error",
+          description: "Failed to send message.",
+          variant: "destructive",
+        });
         return false;
       }
       
       await fetchMessages(); // Refresh messages
+      toast({
+        title: "Message Sent",
+        description: "Your message has been sent successfully.",
+      });
       return true;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -115,13 +103,11 @@ export const useMessages = (currentUserId?: string) => {
 
       if (error) {
         console.error('Error marking message as read:', error);
-        if (!error.message.includes('RLS') && !error.message.includes('policy')) {
-          toast({
-            title: "Error",
-            description: "Failed to mark message as read.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Error",
+          description: "Failed to mark message as read.",
+          variant: "destructive",
+        });
       } else {
         setMessages(prev => 
           prev.map(msg => 

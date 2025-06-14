@@ -68,6 +68,10 @@ export const useReports = () => {
       if (error) throw error;
 
       await fetchReports(); // Refresh the list
+      toast({
+        title: "Report Created",
+        description: "The report has been created successfully.",
+      });
       return data;
     } catch (error) {
       console.error('Error adding report:', error);
@@ -90,6 +94,10 @@ export const useReports = () => {
       if (error) throw error;
 
       await fetchReports(); // Refresh the list
+      toast({
+        title: "Report Deleted",
+        description: "The report has been deleted successfully.",
+      });
       return true;
     } catch (error) {
       console.error('Error deleting report:', error);

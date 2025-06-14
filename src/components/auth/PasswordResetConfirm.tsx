@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Key, CheckCircle } from "lucide-react";
 
 export const PasswordResetConfirm = () => {
@@ -57,27 +58,22 @@ export const PasswordResetConfirm = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('/functions/v1/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token, newPassword }),
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: { token, newPassword },
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (error) {
+        console.error('Password reset error:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to reset password",
+          variant: "destructive",
+        });
+      } else {
         setResetComplete(true);
         toast({
           title: "Password reset successful",
-          description: data.message,
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to reset password",
-          variant: "destructive",
+          description: data?.message || "Your password has been updated successfully",
         });
       }
     } catch (error) {
