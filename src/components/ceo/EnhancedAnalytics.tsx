@@ -11,11 +11,13 @@ import { IndividualProgressChart } from "./analytics/IndividualProgressChart";
 import { CompletionRatesChart } from "./analytics/CompletionRatesChart";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useActivities } from "@/hooks/useActivities";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const EnhancedAnalytics = () => {
   const { profiles } = useProfiles();
   const { activities } = useActivities();
   const [selectedTimeRange, setSelectedTimeRange] = useState<"week" | "month" | "quarter">("month");
+  const isMobile = useIsMobile();
 
   const employees = profiles.filter(p => p.role === 'employee');
   const departments = [...new Set(employees.map(e => e.department))];
@@ -58,22 +60,29 @@ export const EnhancedAnalytics = () => {
     },
   ];
 
+  const tabs = [
+    { value: "patterns", label: isMobile ? "Patterns" : "Submission Patterns", icon: Calendar },
+    { value: "departments", label: isMobile ? "Departments" : "Department Analysis", icon: Building2 },
+    { value: "individual", label: isMobile ? "Individual" : "Individual Progress", icon: Users },
+    { value: "completion", label: isMobile ? "Completion" : "Completion Rates", icon: TrendingUp },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800">Enhanced Analytics</h2>
-          <p className="text-slate-600 mt-1">Deep insights into employee productivity and engagement</p>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800">Enhanced Analytics</h2>
+          <p className="text-slate-600 mt-1 text-sm sm:text-base">Deep insights into employee productivity and engagement</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2">
           {(["week", "month", "quarter"] as const).map((range) => (
             <Button
               key={range}
               variant={selectedTimeRange === range ? "default" : "outline"}
-              size="sm"
+              size={isMobile ? "sm" : "sm"}
               onClick={() => setSelectedTimeRange(range)}
-              className="capitalize"
+              className="capitalize text-xs sm:text-sm"
             >
               {range}
             </Button>
@@ -82,54 +91,48 @@ export const EnhancedAnalytics = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat, index) => (
           <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-3 rounded-full bg-slate-100 ${stat.color}`}>
-                  <stat.icon className="w-5 h-5" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className={`p-2 sm:p-3 rounded-full bg-slate-100 ${stat.color}`}>
+                  <stat.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  {stat.change}
+                  {isMobile ? stat.change.split(' ')[0] : stat.change}
                 </Badge>
               </div>
-              <p className="text-sm font-medium text-slate-600">{stat.title}</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">{stat.value}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-600">{stat.title}</p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 mt-1">{stat.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Analytics Tabs */}
-      <Tabs defaultValue="patterns" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 h-12">
-          <TabsTrigger value="patterns" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Submission Patterns
-          </TabsTrigger>
-          <TabsTrigger value="departments" className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            Department Analysis
-          </TabsTrigger>
-          <TabsTrigger value="individual" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Individual Progress
-          </TabsTrigger>
-          <TabsTrigger value="completion" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Completion Rates
-          </TabsTrigger>
+      <Tabs defaultValue="patterns" className="space-y-4 sm:space-y-6">
+        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 h-auto' : 'grid-cols-4 h-12'}`}>
+          {tabs.map((tab) => (
+            <TabsTrigger 
+              key={tab.value}
+              value={tab.value} 
+              className={`flex items-center gap-1 sm:gap-2 ${isMobile ? 'flex-col py-3 px-2' : ''}`}
+            >
+              <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm">{tab.label}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="patterns" className="space-y-6">
+        <TabsContent value="patterns" className="space-y-4 sm:space-y-6">
           <SubmissionPatternChart 
             activities={activities} 
             timeRange={selectedTimeRange} 
           />
         </TabsContent>
 
-        <TabsContent value="departments" className="space-y-6">
+        <TabsContent value="departments" className="space-y-4 sm:space-y-6">
           <DepartmentProductivityChart 
             employees={employees} 
             activities={activities} 
@@ -137,7 +140,7 @@ export const EnhancedAnalytics = () => {
           />
         </TabsContent>
 
-        <TabsContent value="individual" className="space-y-6">
+        <TabsContent value="individual" className="space-y-4 sm:space-y-6">
           <IndividualProgressChart 
             employees={employees} 
             activities={activities} 
@@ -145,7 +148,7 @@ export const EnhancedAnalytics = () => {
           />
         </TabsContent>
 
-        <TabsContent value="completion" className="space-y-6">
+        <TabsContent value="completion" className="space-y-4 sm:space-y-6">
           <CompletionRatesChart 
             employees={employees} 
             activities={activities} 

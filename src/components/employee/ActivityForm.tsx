@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { PlusCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityFormProps {
   onSubmitted: () => void;
@@ -23,6 +24,7 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,19 +82,19 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
 
   return (
     <Card className="border-0 shadow-lg">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <PlusCircle className="w-5 h-5 text-blue-600" />
+      <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
           Log Daily Activity
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm sm:text-base">
           Record your work activities for today. Be specific about tasks completed and time spent.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column */}
+      <CardContent className="px-4 sm:px-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className={`grid grid-cols-1 ${isMobile ? '' : 'lg:grid-cols-2'} gap-4 sm:gap-6`}>
+            {/* Left Column - Always full width on mobile */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="title" className="text-sm font-medium">
@@ -118,18 +120,18 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe what you accomplished today..."
                   required
-                  className="mt-1 min-h-[120px]"
+                  className={`mt-1 ${isMobile ? 'min-h-[100px]' : 'min-h-[120px]'}`}
                 />
               </div>
             </div>
 
-            {/* Right Column */}
+            {/* Right Column - Time inputs and comments */}
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Label htmlFor="timeStarted" className="text-sm font-medium flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    Start Time
+                    <span className={isMobile ? 'text-xs' : ''}>Start Time</span>
                   </Label>
                   <Input
                     id="timeStarted"
@@ -142,7 +144,7 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
                 <div>
                   <Label htmlFor="timeEnded" className="text-sm font-medium flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    End Time
+                    <span className={isMobile ? 'text-xs' : ''}>End Time</span>
                   </Label>
                   <Input
                     id="timeEnded"
@@ -163,17 +165,18 @@ export const ActivityForm = ({ onSubmitted, hasSubmittedToday }: ActivityFormPro
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   placeholder="Any additional comments or observations..."
-                  className="mt-1 min-h-[120px]"
+                  className={`mt-1 ${isMobile ? 'min-h-[100px]' : 'min-h-[120px]'}`}
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end pt-3 sm:pt-4 border-t">
             <Button
               type="submit"
               disabled={isSubmitting || hasSubmittedToday}
-              className="bg-blue-600 hover:bg-blue-700 px-8"
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto px-6 sm:px-8"
+              size={isMobile ? "default" : "default"}
             >
               {isSubmitting ? "Submitting..." : hasSubmittedToday ? "Already Submitted" : "Submit Activity"}
             </Button>

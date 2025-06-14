@@ -8,6 +8,7 @@ import { DashboardHeader } from "../shared/DashboardHeader";
 import { CheckCircle, Clock, Calendar } from "lucide-react";
 import { useActivities } from "@/hooks/useActivities";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@/types/user";
 
 interface EmployeeDashboardProps {
@@ -20,6 +21,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
   const { activities, fetchActivities } = useActivities();
   const [activeTab, setActiveTab] = useState<"log" | "history">("log");
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false);
+  const isMobile = useIsMobile();
 
   // Check if user has submitted today
   useEffect(() => {
@@ -38,9 +40,9 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
   };
 
   const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
+    weekday: isMobile ? "short" : "long",
     year: "numeric",
-    month: "long",
+    month: isMobile ? "short" : "long",
     day: "numeric"
   });
 
@@ -48,37 +50,37 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <DashboardHeader user={user} onLogout={onLogout} />
       
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">
-            Welcome back, {user.name}!
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
+            Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}!
           </h1>
-          <p className="text-slate-600 flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
+          <p className="text-slate-600 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
             {today}
           </p>
         </div>
 
         {/* Status Card */}
-        <Card className="mb-8 border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+        <Card className="mb-6 sm:mb-8 border-0 shadow-lg">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3 sm:gap-0">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {hasSubmittedToday ? (
                   <>
-                    <CheckCircle className="w-6 h-6 text-green-500" />
+                    <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 flex-shrink-0" />
                     <div>
-                      <h3 className="font-semibold text-green-700">Today's Activity Logged</h3>
-                      <p className="text-sm text-green-600">Great job! Your daily report has been submitted.</p>
+                      <h3 className="font-semibold text-green-700 text-sm sm:text-base">Today's Activity Logged</h3>
+                      <p className="text-xs sm:text-sm text-green-600">Great job! Your daily report has been submitted.</p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <Clock className="w-6 h-6 text-amber-500" />
+                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 flex-shrink-0" />
                     <div>
-                      <h3 className="font-semibold text-amber-700">Daily Activity Pending</h3>
-                      <p className="text-sm text-amber-600">Please log your activities for today.</p>
+                      <h3 className="font-semibold text-amber-700 text-sm sm:text-base">Daily Activity Pending</h3>
+                      <p className="text-xs sm:text-sm text-amber-600">Please log your activities for today.</p>
                     </div>
                   </>
                 )}
@@ -88,18 +90,20 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
         </Card>
 
         {/* Tab Navigation */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-6">
           <Button
             variant={activeTab === "log" ? "default" : "outline"}
             onClick={() => setActiveTab("log")}
-            className="flex-1 h-12"
+            className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
+            size={isMobile ? "sm" : "default"}
           >
             Log Activity
           </Button>
           <Button
             variant={activeTab === "history" ? "default" : "outline"}
             onClick={() => setActiveTab("history")}
-            className="flex-1 h-12"
+            className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
+            size={isMobile ? "sm" : "default"}
           >
             View History
           </Button>
