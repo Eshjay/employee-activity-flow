@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
+import { UserSelector } from "./UserSelector";
 import { Mail, Send, Inbox, Reply } from "lucide-react";
 
 interface MessagingSystemDataProps {
@@ -30,6 +31,8 @@ export const MessagingSystemData = ({
   const [content, setContent] = useState("");
   const [view, setView] = useState<"compose" | "inbox">("inbox");
   const [replyToMessage, setReplyToMessage] = useState<string | null>(null);
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | undefined>(recipientId);
+  const [selectedRecipientName, setSelectedRecipientName] = useState<string | undefined>(recipientName);
   
   const { messages, sendMessage, markAsRead, getUnreadCount } = useMessages(currentUserId);
   const { profiles } = useProfiles();
@@ -39,6 +42,8 @@ export const MessagingSystemData = ({
   useEffect(() => {
     if (recipientId && recipientName) {
       setView("compose");
+      setSelectedRecipientId(recipientId);
+      setSelectedRecipientName(recipientName);
     } else {
       setView("inbox");
     }
@@ -53,12 +58,12 @@ export const MessagingSystemData = ({
     // Determine the actual recipient
     const actualRecipientId = replyToMessage ? 
       messages.find(m => m.id === replyToMessage)?.sender_id : 
-      recipientId;
+      selectedRecipientId;
 
     if (!actualRecipientId || !subject || !content) {
       toast({
         title: "Error",
-        description: "Please fill in all fields.",
+        description: "Please fill in all fields and select a recipient.",
         variant: "destructive",
       });
       return;
@@ -68,7 +73,7 @@ export const MessagingSystemData = ({
     
     if (success) {
       const recipientProfile = profiles.find(p => p.id === actualRecipientId);
-      const recipientDisplayName = recipientProfile?.name || recipientName || "recipient";
+      const recipientDisplayName = recipientProfile?.name || selectedRecipientName || "recipient";
       
       toast({
         title: "Message Sent",
@@ -77,6 +82,8 @@ export const MessagingSystemData = ({
       setSubject("");
       setContent("");
       setReplyToMessage(null);
+      setSelectedRecipientId(undefined);
+      setSelectedRecipientName(undefined);
       setView("inbox");
     }
   };
@@ -89,6 +96,8 @@ export const MessagingSystemData = ({
     const message = messages.find(m => m.id === messageId);
     if (message) {
       setReplyToMessage(messageId);
+      setSelectedRecipientId(message.sender_id);
+      setSelectedRecipientName(getProfileName(message.sender_id));
       setSubject(`Re: ${message.subject}`);
       setContent("");
       setView("compose");
@@ -97,9 +106,16 @@ export const MessagingSystemData = ({
 
   const handleComposeNew = () => {
     setReplyToMessage(null);
+    setSelectedRecipientId(undefined);
+    setSelectedRecipientName(undefined);
     setSubject("");
     setContent("");
     setView("compose");
+  };
+
+  const handleUserSelect = (userId: string, userName: string) => {
+    setSelectedRecipientId(userId);
+    setSelectedRecipientName(userName);
   };
 
   const getComposeRecipientName = () => {
@@ -109,15 +125,7 @@ export const MessagingSystemData = ({
         return getProfileName(message.sender_id);
       }
     }
-    return recipientName || "";
-  };
-
-  const getComposeRecipientId = () => {
-    if (replyToMessage) {
-      const message = messages.find(m => m.id === replyToMessage);
-      return message?.sender_id;
-    }
-    return recipientId;
+    return selectedRecipientName || "";
   };
 
   return (
@@ -130,7 +138,9 @@ export const MessagingSystemData = ({
           </DialogTitle>
           <DialogDescription>
             {view === "compose" 
-              ? `Send a message to ${getComposeRecipientName()}`
+              ? replyToMessage 
+                ? `Reply to ${getComposeRecipientName()}`
+                : "Compose a new message"
               : "View and manage your messages"
             }
           </DialogDescription>
@@ -159,15 +169,26 @@ export const MessagingSystemData = ({
 
           {view === "compose" ? (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="recipient">To:</Label>
-                <Input
-                  id="recipient"
-                  value={getComposeRecipientName()}
-                  readOnly
-                  className="bg-gray-50"
+              {/* Recipient Selection */}
+              {replyToMessage ? (
+                <div>
+                  <Label htmlFor="recipient">To:</Label>
+                  <Input
+                    id="recipient"
+                    value={getComposeRecipientName()}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+              ) : (
+                <UserSelector
+                  selectedUserId={selectedRecipientId}
+                  selectedUserName={selectedRecipientName}
+                  onUserSelect={handleUserSelect}
+                  currentUserId={currentUserId}
+                  placeholder="Select a recipient..."
                 />
-              </div>
+              )}
               
               <div>
                 <Label htmlFor="subject">Subject</Label>
@@ -194,7 +215,7 @@ export const MessagingSystemData = ({
                 <Button 
                   onClick={handleSendMessage} 
                   className="flex-1"
-                  disabled={!getComposeRecipientId() || !subject || !content}
+                  disabled={!selectedRecipientId || !subject || !content}
                 >
                   <Send className="w-4 h-4 mr-2" />
                   Send Message
