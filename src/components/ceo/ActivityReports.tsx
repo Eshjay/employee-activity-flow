@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Calendar, Mail, FileText, TrendingUp } from "lucide-react";
+import { Download, Calendar, Mail, FileText, TrendingUp, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateDailyReport, generateWeeklyReport } from "@/utils/downloadUtils";
 import { sendDailyReminders, sendWeeklyReport } from "@/utils/emailUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 const mockReports = [
   {
@@ -41,6 +42,8 @@ const mockReports = [
 export const ActivityReports = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSendingEmails, setIsSendingEmails] = useState(false);
+  const [reports, setReports] = useState(mockReports);
+  const { profile } = useAuth();
   const { toast } = useToast();
 
   const handleGenerateReport = async (type: string) => {
@@ -76,7 +79,7 @@ export const ActivityReports = () => {
   };
 
   const handleDownloadReport = (reportId: number) => {
-    const report = mockReports.find(r => r.id === reportId);
+    const report = reports.find(r => r.id === reportId);
     if (!report) return;
 
     if (report.type === "Daily Report") {
@@ -88,6 +91,27 @@ export const ActivityReports = () => {
     toast({
       title: "Download Started",
       description: `Downloading ${report.type} from ${report.date}`,
+    });
+  };
+
+  const handleDeleteReport = (reportId: number) => {
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+
+    // Only allow developers to delete reports
+    if (profile?.role !== 'developer') {
+      toast({
+        title: "Access Denied",
+        description: "Only developers can delete reports.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setReports(prevReports => prevReports.filter(r => r.id !== reportId));
+    toast({
+      title: "Report Deleted",
+      description: `${report.type} from ${report.date} has been deleted.`,
     });
   };
 
@@ -116,6 +140,8 @@ export const ActivityReports = () => {
       setIsSendingEmails(false);
     }
   };
+
+  const isDeveloper = profile?.role === 'developer';
 
   return (
     <div className="space-y-6">
@@ -169,11 +195,16 @@ export const ActivityReports = () => {
           <CardTitle className="text-xl font-semibold">Reports History</CardTitle>
           <CardDescription>
             Previously generated reports and email notifications
+            {isDeveloper && (
+              <span className="ml-2 text-blue-600 font-medium">
+                (Developer: Delete access enabled)
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockReports.map((report) => (
+            {reports.map((report) => (
               <div key={report.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -200,15 +231,29 @@ export const ActivityReports = () => {
                     {report.status}
                   </Badge>
                   
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-1"
-                    onClick={() => handleDownloadReport(report.id)}
-                  >
-                    <Download className="w-3 h-3" />
-                    Download
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => handleDownloadReport(report.id)}
+                    >
+                      <Download className="w-3 h-3" />
+                      Download
+                    </Button>
+                    
+                    {isDeveloper && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                        onClick={() => handleDeleteReport(report.id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

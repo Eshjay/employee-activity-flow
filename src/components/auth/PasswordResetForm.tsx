@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PasswordResetFormProps {
   onBackToLogin: () => void;
@@ -23,37 +24,31 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
     setLoading(true);
 
     try {
-      const response = await fetch('/functions/v1/send-password-reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      console.log('Attempting to send password reset for:', email);
+
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email }
       });
 
-      const data = await response.json();
+      console.log('Password reset response:', { data, error });
 
-      if (response.ok) {
-        setResetSent(true);
-        if (data.resetLink) {
-          setResetLink(data.resetLink);
-        }
-        toast({
-          title: "Reset link sent",
-          description: data.message,
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to send reset email",
-          variant: "destructive",
-        });
+      if (error) {
+        throw error;
       }
+
+      setResetSent(true);
+      if (data?.resetLink) {
+        setResetLink(data.resetLink);
+      }
+      toast({
+        title: "Reset link sent",
+        description: data?.message || "If an account with that email exists, a password reset link has been sent.",
+      });
     } catch (error) {
       console.error('Password reset error:', error);
       toast({
         title: "Error",
-        description: "Failed to send reset email. Please try again.",
+        description: error.message || "Failed to send reset email. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -18,6 +18,10 @@ serve(async (req) => {
   try {
     const { email, resetLink, userName } = await req.json()
 
+    console.log('Attempting to send reset email to:', email)
+    console.log('Reset link:', resetLink)
+    console.log('RESEND_API_KEY present:', !!Deno.env.get('RESEND_API_KEY'))
+
     if (!email || !resetLink) {
       return new Response(
         JSON.stringify({ error: 'Email and reset link are required' }),
@@ -28,8 +32,19 @@ serve(async (req) => {
       )
     }
 
+    if (!Deno.env.get('RESEND_API_KEY')) {
+      console.error('RESEND_API_KEY not configured')
+      return new Response(
+        JSON.stringify({ error: 'Email service not configured' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     const emailResponse = await resend.emails.send({
-      from: 'Activity Tracker <noreply@yourdomain.com>',
+      from: 'Activity Tracker <onboarding@resend.dev>',
       to: [email],
       subject: 'Password Reset Request - Activity Tracker',
       html: `
@@ -77,7 +92,18 @@ serve(async (req) => {
       `,
     })
 
-    console.log('Password reset email sent:', emailResponse)
+    console.log('Password reset email result:', emailResponse)
+
+    if (emailResponse.error) {
+      console.error('Resend error:', emailResponse.error)
+      return new Response(
+        JSON.stringify({ error: `Failed to send email: ${emailResponse.error.message}` }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
 
     return new Response(
       JSON.stringify({ 
@@ -94,7 +120,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error sending password reset email:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to send password reset email' }),
+      JSON.stringify({ error: `Failed to send password reset email: ${error.message}` }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

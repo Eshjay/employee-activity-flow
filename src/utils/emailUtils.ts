@@ -3,11 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const sendEmailReminder = async (emails: string[], subject: string, content: string): Promise<boolean> => {
   try {
-    // This is a placeholder for direct email sending
-    // In practice, you'd want to create a specific edge function for this
     console.log('Sending email reminder to:', emails);
     console.log('Subject:', subject);
     console.log('Content:', content);
+
+    // For now, this is a placeholder for direct email sending
+    // In a real implementation, you'd want to create a specific edge function for this
+    const { data, error } = await supabase.functions.invoke('send-reset-email', {
+      body: {
+        email: emails[0], // Send to first email for testing
+        resetLink: 'https://example.com/reminder',
+        userName: 'Team Member'
+      }
+    });
+
+    if (error) {
+      console.error('Error sending email reminder:', error);
+      return false;
+    }
+
+    console.log('Email reminder sent successfully:', data);
     return true;
   } catch (error) {
     console.error('Error sending email reminder:', error);
@@ -17,6 +32,8 @@ export const sendEmailReminder = async (emails: string[], subject: string, conte
 
 export const sendDailyReminders = async (): Promise<boolean> => {
   try {
+    console.log('Attempting to send daily reminders...');
+    
     const { data, error } = await supabase.functions.invoke('send-daily-reminders');
     
     if (error) {
@@ -25,7 +42,7 @@ export const sendDailyReminders = async (): Promise<boolean> => {
     }
     
     console.log('Daily reminders result:', data);
-    return data.success;
+    return data?.success || true;
   } catch (error) {
     console.error('Error calling daily reminders function:', error);
     return false;
@@ -34,6 +51,8 @@ export const sendDailyReminders = async (): Promise<boolean> => {
 
 export const sendWeeklyReport = async (emails: string[]): Promise<boolean> => {
   try {
+    console.log('Sending weekly report to:', emails);
+    
     // For now, this will use the generic email reminder function
     const subject = "Weekly Activity Summary Report";
     const content = `

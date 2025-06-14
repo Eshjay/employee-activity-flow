@@ -33,12 +33,16 @@ export const PasswordDialog = ({ userId, userName, isOpen, onClose }: PasswordDi
         throw new Error('Could not find user profile');
       }
 
+      console.log('Sending password reset for user:', profile.email);
+
       // Send password reset email using the correct edge function
       const { data, error } = await supabase.functions.invoke('send-password-reset', {
         body: {
           email: profile.email
         }
       });
+
+      console.log('Password reset function response:', { data, error });
 
       if (error) {
         throw error;
@@ -53,7 +57,7 @@ export const PasswordDialog = ({ userId, userName, isOpen, onClose }: PasswordDi
       console.error('Error sending password reset:', error);
       toast({
         title: "Error",
-        description: "Failed to send password reset email. Please try again.",
+        description: `Failed to send password reset email: ${error.message || 'Please try again.'}`,
         variant: "destructive",
       });
     } finally {
