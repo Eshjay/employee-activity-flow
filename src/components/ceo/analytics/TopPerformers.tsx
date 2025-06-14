@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Award } from "lucide-react";
 import type { ExtendedEmployeeData } from "./types";
-import { getTrendIcon, getTrendColor } from "./utils";
+import { TrendIndicator } from "./TrendIndicator";
 
 interface TopPerformersProps {
   topPerformers: ExtendedEmployeeData[];
@@ -49,10 +49,10 @@ export const TopPerformers = ({ topPerformers, timeRange, onSelectEmployee }: To
                         <Badge variant="outline" className="text-xs">
                           {employee.totalActivities} activities
                         </Badge>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getTrendColor(employee.trend)}`}>
-                          {getTrendIcon(employee.trend)}
-                          {employee.trendPercentage.toFixed(0)}%
-                        </div>
+                        <TrendIndicator 
+                          trend={employee.trend}
+                          percentage={employee.trendPercentage}
+                        />
                       </div>
                     </div>
                   </div>
