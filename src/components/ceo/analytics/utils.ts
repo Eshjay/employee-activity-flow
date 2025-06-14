@@ -2,6 +2,7 @@
 import type { Activity } from "@/hooks/useActivities";
 import type { Profile } from "@/types/user";
 import type { ExtendedEmployeeData, ProgressDataPoint } from "./types";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 export const processEmployeeData = (employees: Profile[], activities: Activity[]): ExtendedEmployeeData[] => {
   return employees.map(employee => {
@@ -70,8 +71,6 @@ export const processEmployeeProgress = (
 };
 
 export const getTrendIcon = (trend: string) => {
-  const { TrendingUp, TrendingDown, Minus } = require('lucide-react');
-  
   switch (trend) {
     case 'up':
       return <TrendingUp className="w-4 h-4 text-green-500" />;
