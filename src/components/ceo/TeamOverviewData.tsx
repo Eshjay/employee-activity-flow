@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CheckCircle, Clock, AlertCircle, Eye, Mail } from "lucide-react";
 import { EmployeeDetailModal } from "../shared/EmployeeDetailModal";
-import { MessagingSystem } from "../shared/MessagingSystem";
+import { MessagingSystemData } from "../shared/MessagingSystemData";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useActivities } from "@/hooks/useActivities";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,13 +47,33 @@ export const TeamOverviewData = () => {
     ).length;
   };
 
+  const getTodayActivityCount = (employeeId: string) => {
+    return activities.filter(activity => 
+      activity.user_id === employeeId && activity.date === today
+    ).length;
+  };
+
+  const getLastActivityDate = (employeeId: string) => {
+    const userActivities = activities
+      .filter(activity => activity.user_id === employeeId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    return userActivities.length > 0 ? userActivities[0].date : 'No activities';
+  };
+
   const handleViewEmployee = (employee: any) => {
     const employeeActivities = activities.filter(a => a.user_id === employee.id);
+    const lastActivityDate = getLastActivityDate(employee.id);
+    
     setSelectedEmployee({
-      ...employee,
-      activities: employeeActivities,
+      id: parseInt(employee.id.replace(/-/g, '').substring(0, 8), 16), // Convert UUID to number for modal
+      name: employee.name,
+      email: employee.email,
+      department: employee.department,
+      lastActivity: lastActivityDate,
       status: getEmployeeStatus(employee.id),
-      activitiesThisWeek: getWeeklyActivityCount(employee.id)
+      activitiesThisWeek: getWeeklyActivityCount(employee.id),
+      activities: employeeActivities
     });
     setIsModalOpen(true);
   };
@@ -97,13 +117,22 @@ export const TeamOverviewData = () => {
     );
   }
 
+  if (employees.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <div className="text-lg font-semibold text-gray-600 mb-2">No Employees Found</div>
+        <p className="text-gray-500">No employees are currently registered in the system.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Team Activity Status</CardTitle>
           <CardDescription>
-            Current status of daily activity submissions from all team members
+            Current status of daily activity submissions from all team members - Today: {new Date().toLocaleDateString()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -111,6 +140,7 @@ export const TeamOverviewData = () => {
             {employees.map((employee) => {
               const status = getEmployeeStatus(employee.id);
               const weeklyCount = getWeeklyActivityCount(employee.id);
+              const todayCount = getTodayActivityCount(employee.id);
               
               return (
                 <div key={employee.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
@@ -127,6 +157,11 @@ export const TeamOverviewData = () => {
                   </div>
                   
                   <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-slate-700">{todayCount}</p>
+                      <p className="text-xs text-slate-500">Today</p>
+                    </div>
+                    
                     <div className="text-center">
                       <p className="text-sm font-medium text-slate-700">{weeklyCount}</p>
                       <p className="text-xs text-slate-500">This week</p>
@@ -169,10 +204,11 @@ export const TeamOverviewData = () => {
         employee={selectedEmployee}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        currentUserId={currentUser?.id}
       />
 
       {messagingRecipient && currentUser && (
-        <MessagingSystem
+        <MessagingSystemData
           currentUserId={currentUser.id}
           recipientId={messagingRecipient.id}
           recipientName={messagingRecipient.name}

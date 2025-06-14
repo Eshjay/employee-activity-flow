@@ -19,18 +19,27 @@ interface CEODashboardProps {
 
 export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
   const [activeTab, setActiveTab] = useState<"overview" | "reports" | "analytics">("overview");
-  const { getEmployeeStats } = useProfiles();
-  const { getTodaySubmissions, getWeeklySubmissions } = useActivities();
+  const { profiles } = useProfiles();
+  const { activities } = useActivities();
   const isMobile = useIsMobile();
 
-  const employeeStats = getEmployeeStats();
-  const todaySubmissions = getTodaySubmissions();
-  const weeklySubmissions = getWeeklySubmissions();
+  // Calculate real statistics
+  const employees = profiles.filter(p => p.role === 'employee');
+  const today = new Date().toISOString().split('T')[0];
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const todaySubmissions = activities.filter(activity => activity.date === today);
+  const weeklySubmissions = activities.filter(activity => new Date(activity.date) >= oneWeekAgo);
+  
+  // Calculate active employees (those who submitted activities in the last 7 days)
+  const activeEmployeeIds = new Set(weeklySubmissions.map(a => a.user_id));
+  const activeEmployeesCount = employees.filter(emp => activeEmployeeIds.has(emp.id)).length;
 
   const stats = [
     { 
       title: "Total Employees", 
-      value: employeeStats.totalEmployees.toString(), 
+      value: employees.length.toString(), 
       icon: Users, 
       color: "text-blue-600" 
     },
@@ -41,14 +50,14 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
       color: "text-green-600" 
     },
     { 
-      title: "Weekly Reports", 
+      title: "Weekly Activities", 
       value: weeklySubmissions.length.toString(), 
       icon: BarChart3, 
       color: "text-purple-600" 
     },
     { 
       title: "Active Employees", 
-      value: employeeStats.activeEmployees.toString(), 
+      value: activeEmployeesCount.toString(), 
       icon: Calendar, 
       color: "text-amber-600" 
     },
@@ -71,7 +80,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
             Executive Dashboard
           </h1>
           <p className="text-slate-600 text-sm sm:text-base">
-            Monitor team productivity and activity reports
+            Monitor team productivity and activity reports - Real-time data
           </p>
         </div>
 
