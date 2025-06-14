@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserPlus, Edit, Trash2, Search, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordDialog } from "../shared/PasswordDialog";
 import type { Profile } from "@/types/user";
 
 export const UserManagement = () => {
@@ -18,6 +19,7 @@ export const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [passwordDialogUser, setPasswordDialogUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -174,6 +176,10 @@ export const UserManagement = () => {
     }
   };
 
+  const handleResetPassword = (user: Profile) => {
+    setPasswordDialogUser(user);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -308,6 +314,14 @@ export const UserManagement = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => handleResetPassword(user)}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Key className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handleDeleteUser(user.id)}
                       className="text-red-600 hover:text-red-700"
                     >
@@ -377,6 +391,16 @@ export const UserManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Password Reset Dialog */}
+      {passwordDialogUser && (
+        <PasswordDialog
+          userId={passwordDialogUser.id}
+          userName={passwordDialogUser.name}
+          isOpen={!!passwordDialogUser}
+          onClose={() => setPasswordDialogUser(null)}
+        />
+      )}
     </div>
   );
 };

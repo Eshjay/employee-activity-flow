@@ -9,7 +9,7 @@ import { MessagingSystemData } from "./MessagingSystemData";
 import { useActivities, type Activity } from "@/hooks/useActivities";
 
 interface Employee {
-  id: number;
+  id: string; // Changed from number to string to match UUID
   name: string;
   email: string;
   department: string;
@@ -33,7 +33,9 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
   useEffect(() => {
     const loadEmployeeActivities = async () => {
       if (employee?.id) {
-        const activities = await fetchUserActivities(employee.id.toString());
+        console.log('Fetching activities for employee ID:', employee.id);
+        const activities = await fetchUserActivities(employee.id); // Now using string ID directly
+        console.log('Fetched activities:', activities);
         // Get the 3 most recent activities
         const sortedActivities = activities
           .sort((a, b) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime())
@@ -167,7 +169,7 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
       {currentUserId && (
         <MessagingSystemData
           currentUserId={currentUserId}
-          recipientId={employee.id.toString()}
+          recipientId={employee.id}
           recipientName={employee.name}
           isOpen={isMessagingOpen}
           onClose={() => setIsMessagingOpen(false)}

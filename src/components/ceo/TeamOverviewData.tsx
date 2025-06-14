@@ -66,7 +66,7 @@ export const TeamOverviewData = () => {
     const lastActivityDate = getLastActivityDate(employee.id);
     
     setSelectedEmployee({
-      id: parseInt(employee.id.replace(/-/g, '').substring(0, 8), 16), // Convert UUID to number for modal
+      id: employee.id, // Keep as string UUID
       name: employee.name,
       email: employee.email,
       department: employee.department,
