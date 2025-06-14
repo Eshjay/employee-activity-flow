@@ -266,7 +266,7 @@ export const DatabaseManagement = () => {
                     {Object.entries(healthStatus).map(([table, count]) => (
                       <div key={table} className="p-3 bg-gray-50 rounded-lg">
                         <h5 className="font-medium capitalize">{table}</h5>
-                        <p className="text-lg font-bold">{count}</p>
+                        <p className="text-lg font-bold">{String(count)}</p>
                       </div>
                     ))}
                   </div>
