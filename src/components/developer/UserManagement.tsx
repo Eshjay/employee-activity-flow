@@ -37,6 +37,15 @@ export const UserManagement = () => {
     }
   };
 
+  const handleNewUserChange = (user: Partial<Profile> & { role: "employee" | "ceo" | "developer" }) => {
+    setNewUser({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role,
+      department: user.department || ""
+    });
+  };
+
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     
@@ -77,7 +86,7 @@ export const UserManagement = () => {
               isOpen={isAddUserOpen}
               onOpenChange={setIsAddUserOpen}
               newUser={newUser}
-              onUserChange={setNewUser}
+              onUserChange={handleNewUserChange}
               onSubmit={handleAddUser}
             />
           </div>
