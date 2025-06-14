@@ -20,11 +20,13 @@ export const useMessages = (currentUserId?: string) => {
 
   const fetchMessages = async () => {
     if (!currentUserId) {
+      console.log('useMessages: No currentUserId provided');
       setLoading(false);
       return;
     }
     
     try {
+      console.log('useMessages: Fetching messages for user:', currentUserId);
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -32,17 +34,18 @@ export const useMessages = (currentUserId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        console.error('useMessages: Error fetching messages:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch messages.",
+          description: `Failed to fetch messages: ${error.message}`,
           variant: "destructive",
         });
       } else {
+        console.log('useMessages: Successfully fetched messages:', data?.length || 0);
         setMessages(data || []);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('useMessages: Catch block error:', error);
       toast({
         title: "Error",
         description: "Failed to fetch messages.",
@@ -54,9 +57,13 @@ export const useMessages = (currentUserId?: string) => {
   };
 
   const sendMessage = async (recipientId: string, subject: string, content: string) => {
-    if (!currentUserId) return false;
+    if (!currentUserId) {
+      console.log('useMessages: Cannot send message - no currentUserId');
+      return false;
+    }
     
     try {
+      console.log('useMessages: Sending message from', currentUserId, 'to', recipientId);
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -67,15 +74,16 @@ export const useMessages = (currentUserId?: string) => {
         });
 
       if (error) {
-        console.error('Error sending message:', error);
+        console.error('useMessages: Error sending message:', error);
         toast({
           title: "Error",
-          description: "Failed to send message.",
+          description: `Failed to send message: ${error.message}`,
           variant: "destructive",
         });
         return false;
       }
       
+      console.log('useMessages: Message sent successfully');
       await fetchMessages(); // Refresh messages
       toast({
         title: "Message Sent",
@@ -83,7 +91,7 @@ export const useMessages = (currentUserId?: string) => {
       });
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('useMessages: Catch block error sending message:', error);
       toast({
         title: "Error",
         description: "Failed to send message.",
@@ -95,6 +103,7 @@ export const useMessages = (currentUserId?: string) => {
 
   const markAsRead = async (messageId: string) => {
     try {
+      console.log('useMessages: Marking message as read:', messageId);
       const { error } = await supabase
         .from('messages')
         .update({ is_read: true })
@@ -102,13 +111,14 @@ export const useMessages = (currentUserId?: string) => {
         .eq('recipient_id', currentUserId);
 
       if (error) {
-        console.error('Error marking message as read:', error);
+        console.error('useMessages: Error marking message as read:', error);
         toast({
           title: "Error",
-          description: "Failed to mark message as read.",
+          description: `Failed to mark message as read: ${error.message}`,
           variant: "destructive",
         });
       } else {
+        console.log('useMessages: Message marked as read successfully');
         setMessages(prev => 
           prev.map(msg => 
             msg.id === messageId ? { ...msg, is_read: true } : msg
@@ -116,7 +126,7 @@ export const useMessages = (currentUserId?: string) => {
         );
       }
     } catch (error) {
-      console.error('Error marking message as read:', error);
+      console.error('useMessages: Catch block error marking as read:', error);
     }
   };
 

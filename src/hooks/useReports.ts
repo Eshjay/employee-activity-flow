@@ -27,16 +27,21 @@ export const useReports = () => {
   const fetchReports = async () => {
     try {
       setLoading(true);
+      console.log('useReports: Fetching reports');
       const { data, error } = await supabase
         .from('reports')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('useReports: Error fetching reports:', error);
+        throw error;
+      }
 
+      console.log('useReports: Successfully fetched reports:', data?.length || 0);
       setReports(data || []);
     } catch (error) {
-      console.error('Error fetching reports:', error);
+      console.error('useReports: Error fetching reports:', error);
       toast({
         title: "Error",
         description: "Failed to fetch reports.",
@@ -56,6 +61,7 @@ export const useReports = () => {
     email_sent?: boolean;
   }) => {
     try {
+      console.log('useReports: Adding report for user:', profile?.id);
       const { data, error } = await supabase
         .from('reports')
         .insert([{
@@ -65,8 +71,12 @@ export const useReports = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('useReports: Error adding report:', error);
+        throw error;
+      }
 
+      console.log('useReports: Report added successfully');
       await fetchReports(); // Refresh the list
       toast({
         title: "Report Created",
@@ -74,7 +84,7 @@ export const useReports = () => {
       });
       return data;
     } catch (error) {
-      console.error('Error adding report:', error);
+      console.error('useReports: Error adding report:', error);
       toast({
         title: "Error",
         description: "Failed to create report.",
@@ -86,13 +96,36 @@ export const useReports = () => {
 
   const deleteReport = async (reportId: string) => {
     try {
+      console.log('useReports: Attempting to delete report:', reportId);
+      console.log('useReports: Current user profile:', profile);
+      
+      // Check if user is developer before attempting delete
+      if (profile?.role !== 'developer') {
+        console.log('useReports: User is not a developer, role:', profile?.role);
+        toast({
+          title: "Access Denied",
+          description: "Only developers can delete reports.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       const { error } = await supabase
         .from('reports')
         .delete()
         .eq('id', reportId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('useReports: Error deleting report:', error);
+        toast({
+          title: "Error",
+          description: `Failed to delete report: ${error.message}`,
+          variant: "destructive",
+        });
+        return false;
+      }
 
+      console.log('useReports: Report deleted successfully');
       await fetchReports(); // Refresh the list
       toast({
         title: "Report Deleted",
@@ -100,10 +133,10 @@ export const useReports = () => {
       });
       return true;
     } catch (error) {
-      console.error('Error deleting report:', error);
+      console.error('useReports: Error deleting report:', error);
       toast({
         title: "Error",
-        description: "Failed to delete report. Only developers can delete reports.",
+        description: "Failed to delete report.",
         variant: "destructive",
       });
       return false;
