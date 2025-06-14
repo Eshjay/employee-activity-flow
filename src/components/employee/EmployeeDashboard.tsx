@@ -1,10 +1,13 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ActivityForm } from "./ActivityForm";
-import { ActivityHistory } from "./ActivityHistory";
+import { ActivityHistoryData } from "./ActivityHistoryData";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { CheckCircle, Clock, Calendar } from "lucide-react";
+import { useActivities } from "@/hooks/useActivities";
+import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@/types/user";
 
 interface EmployeeDashboardProps {
@@ -13,11 +16,25 @@ interface EmployeeDashboardProps {
 }
 
 export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) => {
-  const [hasSubmittedToday, setHasSubmittedToday] = useState(false);
+  const { profile } = useAuth();
+  const { activities, fetchActivities } = useActivities();
   const [activeTab, setActiveTab] = useState<"log" | "history">("log");
+  const [hasSubmittedToday, setHasSubmittedToday] = useState(false);
+
+  // Check if user has submitted today
+  useEffect(() => {
+    if (profile?.id && activities.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const todaySubmission = activities.find(activity => 
+        activity.user_id === profile.id && activity.date === today
+      );
+      setHasSubmittedToday(!!todaySubmission);
+    }
+  }, [profile?.id, activities]);
 
   const handleActivitySubmitted = () => {
     setHasSubmittedToday(true);
+    fetchActivities(); // Refresh activities list
   };
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -95,7 +112,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
             hasSubmittedToday={hasSubmittedToday}
           />
         ) : (
-          <ActivityHistory />
+          <ActivityHistoryData />
         )}
       </div>
     </div>

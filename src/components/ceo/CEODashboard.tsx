@@ -1,10 +1,13 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DashboardHeader } from "../shared/DashboardHeader";
-import { TeamOverview } from "./TeamOverview";
+import { TeamOverviewData } from "./TeamOverviewData";
 import { ActivityReports } from "./ActivityReports";
 import { BarChart3, Users, TrendingUp, Calendar } from "lucide-react";
+import { useProfiles } from "@/hooks/useProfiles";
+import { useActivities } from "@/hooks/useActivities";
 import type { User } from "@/types/user";
 
 interface CEODashboardProps {
@@ -14,12 +17,38 @@ interface CEODashboardProps {
 
 export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
   const [activeTab, setActiveTab] = useState<"overview" | "reports">("overview");
+  const { getEmployeeStats } = useProfiles();
+  const { getTodaySubmissions, getWeeklySubmissions } = useActivities();
+
+  const employeeStats = getEmployeeStats();
+  const todaySubmissions = getTodaySubmissions();
+  const weeklySubmissions = getWeeklySubmissions();
 
   const stats = [
-    { title: "Total Employees", value: "12", icon: Users, color: "text-blue-600" },
-    { title: "Today's Submissions", value: "9", icon: TrendingUp, color: "text-green-600" },
-    { title: "Weekly Reports", value: "47", icon: BarChart3, color: "text-purple-600" },
-    { title: "Pending Activities", value: "3", icon: Calendar, color: "text-amber-600" },
+    { 
+      title: "Total Employees", 
+      value: employeeStats.totalEmployees.toString(), 
+      icon: Users, 
+      color: "text-blue-600" 
+    },
+    { 
+      title: "Today's Submissions", 
+      value: todaySubmissions.length.toString(), 
+      icon: TrendingUp, 
+      color: "text-green-600" 
+    },
+    { 
+      title: "Weekly Reports", 
+      value: weeklySubmissions.length.toString(), 
+      icon: BarChart3, 
+      color: "text-purple-600" 
+    },
+    { 
+      title: "Active Employees", 
+      value: employeeStats.activeEmployees.toString(), 
+      icon: Calendar, 
+      color: "text-amber-600" 
+    },
   ];
 
   return (
@@ -77,7 +106,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "overview" ? <TeamOverview /> : <ActivityReports />}
+        {activeTab === "overview" ? <TeamOverviewData /> : <ActivityReports />}
       </div>
     </div>
   );
