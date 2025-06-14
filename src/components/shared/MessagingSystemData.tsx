@@ -2,15 +2,12 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
-import { UserSelector } from "./UserSelector";
-import { Mail, Send, Inbox, Reply } from "lucide-react";
+import { MessageCompose } from "./MessageCompose";
+import { MessageInbox } from "./MessageInbox";
+import { Mail, Send, Inbox } from "lucide-react";
 
 interface MessagingSystemDataProps {
   currentUserId: string;
@@ -168,134 +165,29 @@ export const MessagingSystemData = ({
           </div>
 
           {view === "compose" ? (
-            <div className="space-y-4">
-              {/* Recipient Selection */}
-              {replyToMessage ? (
-                <div>
-                  <Label htmlFor="recipient">To:</Label>
-                  <Input
-                    id="recipient"
-                    value={getComposeRecipientName()}
-                    readOnly
-                    className="bg-gray-50"
-                  />
-                </div>
-              ) : (
-                <UserSelector
-                  selectedUserId={selectedRecipientId}
-                  selectedUserName={selectedRecipientName}
-                  onUserSelect={handleUserSelect}
-                  currentUserId={currentUserId}
-                  placeholder="Select a recipient..."
-                />
-              )}
-              
-              <div>
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Enter message subject"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="content">Message</Label>
-                <Textarea
-                  id="content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Type your message here..."
-                  rows={6}
-                />
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button 
-                  onClick={handleSendMessage} 
-                  className="flex-1"
-                  disabled={!selectedRecipientId || !subject || !content}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Send Message
-                </Button>
-                <Button variant="outline" onClick={() => setView("inbox")} className="flex-1">
-                  Back to Inbox
-                </Button>
-              </div>
-            </div>
+            <MessageCompose
+              currentUserId={currentUserId}
+              replyToMessage={replyToMessage}
+              selectedRecipientId={selectedRecipientId}
+              selectedRecipientName={selectedRecipientName}
+              subject={subject}
+              content={content}
+              messages={messages}
+              profiles={profiles}
+              onUserSelect={handleUserSelect}
+              onSubjectChange={setSubject}
+              onContentChange={setContent}
+              onSendMessage={handleSendMessage}
+              onBackToInbox={() => setView("inbox")}
+            />
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {messages.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">No messages yet</p>
-              ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                      message.is_read ? "bg-white" : "bg-blue-50 border-blue-200"
-                    }`}
-                    onClick={() => {
-                      if (!message.is_read && message.recipient_id === currentUserId) {
-                        handleMarkAsRead(message.id);
-                      }
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{message.subject}</h4>
-                        <p className="text-sm text-gray-600">
-                          {message.sender_id === currentUserId 
-                            ? `To: ${getProfileName(message.recipient_id)}`
-                            : `From: ${getProfileName(message.sender_id)}`
-                          }
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!message.is_read && message.recipient_id === currentUserId && (
-                          <Badge className="bg-blue-100 text-blue-700">New</Badge>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          {new Date(message.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm mb-3">{message.content}</p>
-                    
-                    {/* Action buttons */}
-                    <div className="flex gap-2">
-                      {!message.is_read && message.recipient_id === currentUserId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMarkAsRead(message.id);
-                          }}
-                        >
-                          Mark as Read
-                        </Button>
-                      )}
-                      
-                      {message.sender_id !== currentUserId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReplyToMessage(message.id);
-                          }}
-                        >
-                          <Reply className="w-3 h-3 mr-1" />
-                          Reply
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <MessageInbox
+              messages={messages}
+              currentUserId={currentUserId}
+              profiles={profiles}
+              onMarkAsRead={handleMarkAsRead}
+              onReplyToMessage={handleReplyToMessage}
+            />
           )}
         </div>
       </DialogContent>
