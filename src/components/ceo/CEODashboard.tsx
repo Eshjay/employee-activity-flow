@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { TeamOverviewData } from "./TeamOverviewData";
 import { ActivityReports } from "./ActivityReports";
-import { BarChart3, Users, TrendingUp, Calendar } from "lucide-react";
+import { EnhancedAnalytics } from "./EnhancedAnalytics";
+import { BarChart3, Users, TrendingUp, Calendar, LineChart } from "lucide-react";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useActivities } from "@/hooks/useActivities";
 import type { User } from "@/types/user";
@@ -16,7 +17,7 @@ interface CEODashboardProps {
 }
 
 export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "reports">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "reports" | "analytics">("overview");
   const { getEmployeeStats } = useProfiles();
   const { getTodaySubmissions, getWeeklySubmissions } = useActivities();
 
@@ -103,10 +104,20 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
             <BarChart3 className="w-4 h-4 mr-2" />
             Activity Reports
           </Button>
+          <Button
+            variant={activeTab === "analytics" ? "default" : "outline"}
+            onClick={() => setActiveTab("analytics")}
+            className="flex-1 h-12"
+          >
+            <LineChart className="w-4 h-4 mr-2" />
+            Enhanced Analytics
+          </Button>
         </div>
 
         {/* Tab Content */}
-        {activeTab === "overview" ? <TeamOverviewData /> : <ActivityReports />}
+        {activeTab === "overview" && <TeamOverviewData />}
+        {activeTab === "reports" && <ActivityReports />}
+        {activeTab === "analytics" && <EnhancedAnalytics />}
       </div>
     </div>
   );
