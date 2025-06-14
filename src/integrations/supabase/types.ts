@@ -161,6 +161,48 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          created_by: string
+          date: string
+          email_sent: boolean
+          employees_submitted: number
+          file_path: string | null
+          id: string
+          status: string
+          total_employees: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          date: string
+          email_sent?: boolean
+          employees_submitted?: number
+          file_path?: string | null
+          id?: string
+          status?: string
+          total_employees?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          date?: string
+          email_sent?: boolean
+          employees_submitted?: number
+          file_path?: string | null
+          id?: string
+          status?: string
+          total_employees?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
