@@ -1,4 +1,6 @@
 
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { EmployeeDashboard } from "@/components/employee/EmployeeDashboard";
 import { CEODashboard } from "@/components/ceo/CEODashboard";
@@ -9,12 +11,30 @@ import type { User } from "@/types/user";
 export type { User };
 
 const Index = () => {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, loading, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  if (!profile) {
+  useEffect(() => {
+    // If not loading and not authenticated, redirect to auth page
+    if (!loading && !isAuthenticated) {
+      navigate("/auth");
+    }
+  }, [loading, isAuthenticated, navigate]);
+
+  // Show loading while checking auth state
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading profile...</div>
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show loading (will redirect via useEffect)
+  if (!isAuthenticated || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting to login...</div>
       </div>
     );
   }
