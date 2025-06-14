@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
-import { Mail, Send, Inbox } from "lucide-react";
+import { Mail, Send, Inbox, Reply } from "lucide-react";
 
 interface MessagingSystemDataProps {
   currentUserId: string;
@@ -28,11 +28,21 @@ export const MessagingSystemData = ({
 }: MessagingSystemDataProps) => {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
-  const [view, setView] = useState<"compose" | "inbox">(recipientId ? "compose" : "inbox");
+  const [view, setView] = useState<"compose" | "inbox">("inbox");
+  const [replyToMessage, setReplyToMessage] = useState<string | null>(null);
   
   const { messages, sendMessage, markAsRead, getUnreadCount } = useMessages(currentUserId);
   const { profiles } = useProfiles();
   const { toast } = useToast();
+
+  // Set initial view based on whether we have a recipient
+  useEffect(() => {
+    if (recipientId && recipientName) {
+      setView("compose");
+    } else {
+      setView("inbox");
+    }
+  }, [recipientId, recipientName]);
 
   const getProfileName = (userId: string) => {
     const profile = profiles.find(p => p.id === userId);
@@ -40,7 +50,12 @@ export const MessagingSystemData = ({
   };
 
   const handleSendMessage = async () => {
-    if (!recipientId || !subject || !content) {
+    // Determine the actual recipient
+    const actualRecipientId = replyToMessage ? 
+      messages.find(m => m.id === replyToMessage)?.sender_id : 
+      recipientId;
+
+    if (!actualRecipientId || !subject || !content) {
       toast({
         title: "Error",
         description: "Please fill in all fields.",
@@ -49,21 +64,60 @@ export const MessagingSystemData = ({
       return;
     }
 
-    const success = await sendMessage(recipientId, subject, content);
+    const success = await sendMessage(actualRecipientId, subject, content);
     
     if (success) {
+      const recipientProfile = profiles.find(p => p.id === actualRecipientId);
+      const recipientDisplayName = recipientProfile?.name || recipientName || "recipient";
+      
       toast({
         title: "Message Sent",
-        description: `Your message has been sent to ${recipientName}.`,
+        description: `Your message has been sent to ${recipientDisplayName}.`,
       });
       setSubject("");
       setContent("");
-      onClose();
+      setReplyToMessage(null);
+      setView("inbox");
     }
   };
 
   const handleMarkAsRead = async (messageId: string) => {
     await markAsRead(messageId);
+  };
+
+  const handleReplyToMessage = (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      setReplyToMessage(messageId);
+      setSubject(`Re: ${message.subject}`);
+      setContent("");
+      setView("compose");
+    }
+  };
+
+  const handleComposeNew = () => {
+    setReplyToMessage(null);
+    setSubject("");
+    setContent("");
+    setView("compose");
+  };
+
+  const getComposeRecipientName = () => {
+    if (replyToMessage) {
+      const message = messages.find(m => m.id === replyToMessage);
+      if (message) {
+        return getProfileName(message.sender_id);
+      }
+    }
+    return recipientName || "";
+  };
+
+  const getComposeRecipientId = () => {
+    if (replyToMessage) {
+      const message = messages.find(m => m.id === replyToMessage);
+      return message?.sender_id;
+    }
+    return recipientId;
   };
 
   return (
@@ -76,7 +130,7 @@ export const MessagingSystemData = ({
           </DialogTitle>
           <DialogDescription>
             {view === "compose" 
-              ? `Send a message to ${recipientName}`
+              ? `Send a message to ${getComposeRecipientName()}`
               : "View and manage your messages"
             }
           </DialogDescription>
@@ -87,9 +141,8 @@ export const MessagingSystemData = ({
           <div className="flex gap-2">
             <Button
               variant={view === "compose" ? "default" : "outline"}
-              onClick={() => setView("compose")}
+              onClick={handleComposeNew}
               className="flex-1"
-              disabled={!recipientId}
             >
               <Send className="w-4 h-4 mr-2" />
               Compose
@@ -104,13 +157,13 @@ export const MessagingSystemData = ({
             </Button>
           </div>
 
-          {view === "compose" && recipientId ? (
+          {view === "compose" ? (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="recipient">To:</Label>
                 <Input
                   id="recipient"
-                  value={recipientName || ""}
+                  value={getComposeRecipientName()}
                   readOnly
                   className="bg-gray-50"
                 />
@@ -138,12 +191,16 @@ export const MessagingSystemData = ({
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleSendMessage} className="flex-1">
+                <Button 
+                  onClick={handleSendMessage} 
+                  className="flex-1"
+                  disabled={!getComposeRecipientId() || !subject || !content}
+                >
                   <Send className="w-4 h-4 mr-2" />
                   Send Message
                 </Button>
-                <Button variant="outline" onClick={onClose} className="flex-1">
-                  Cancel
+                <Button variant="outline" onClick={() => setView("inbox")} className="flex-1">
+                  Back to Inbox
                 </Button>
               </div>
             </div>
@@ -155,12 +212,17 @@ export const MessagingSystemData = ({
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`p-4 border rounded-lg ${
-                      message.is_read ? "bg-gray-50" : "bg-blue-50 border-blue-200"
+                    className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      message.is_read ? "bg-white" : "bg-blue-50 border-blue-200"
                     }`}
+                    onClick={() => {
+                      if (!message.is_read && message.recipient_id === currentUserId) {
+                        handleMarkAsRead(message.id);
+                      }
+                    }}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div>
+                      <div className="flex-1">
                         <h4 className="font-semibold">{message.subject}</h4>
                         <p className="text-sm text-gray-600">
                           {message.sender_id === currentUserId 
@@ -178,17 +240,37 @@ export const MessagingSystemData = ({
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm">{message.content}</p>
-                    {!message.is_read && message.recipient_id === currentUserId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => handleMarkAsRead(message.id)}
-                      >
-                        Mark as Read
-                      </Button>
-                    )}
+                    <p className="text-sm mb-3">{message.content}</p>
+                    
+                    {/* Action buttons */}
+                    <div className="flex gap-2">
+                      {!message.is_read && message.recipient_id === currentUserId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAsRead(message.id);
+                          }}
+                        >
+                          Mark as Read
+                        </Button>
+                      )}
+                      
+                      {message.sender_id !== currentUserId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReplyToMessage(message.id);
+                          }}
+                        >
+                          <Reply className="w-3 h-3 mr-1" />
+                          Reply
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
