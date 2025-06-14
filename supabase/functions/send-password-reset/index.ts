@@ -62,16 +62,35 @@ serve(async (req) => {
         expires_at: expiresAt.toISOString()
       })
 
-    // In a real application, you would send an email here
-    // For now, we'll just log the reset link
+    // Create reset link
     const resetLink = `${req.headers.get('origin')}/reset-password?token=${token}`
-    console.log(`Password reset link for ${email}: ${resetLink}`)
+
+    // Send email using the send-reset-email function
+    try {
+      const emailResponse = await supabaseClient.functions.invoke('send-reset-email', {
+        body: {
+          email: userProfile.email,
+          resetLink: resetLink,
+          userName: userProfile.name
+        }
+      })
+
+      if (emailResponse.error) {
+        console.error('Error sending email:', emailResponse.error)
+        // Still return success to not reveal if user exists
+      } else {
+        console.log('Password reset email sent successfully')
+      }
+    } catch (emailError) {
+      console.error('Error calling email function:', emailError)
+      // Still continue with success response
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'If an account with that email exists, a password reset link has been sent.',
-        // In development, we'll return the link
+        // In development, we'll still return the link for testing
         resetLink: resetLink
       }),
       { 

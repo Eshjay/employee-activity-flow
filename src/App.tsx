@@ -2,10 +2,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Index } from "@/pages/Index";
-import { Auth } from "@/pages/Auth";
-import { ResetPassword } from "@/pages/ResetPassword";
-import { NotFound } from "@/pages/NotFound";
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import ResetPassword from "@/pages/ResetPassword";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
