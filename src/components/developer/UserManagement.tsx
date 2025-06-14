@@ -16,10 +16,15 @@ export const UserManagement = () => {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [passwordDialogUser, setPasswordDialogUser] = useState<Profile | null>(null);
 
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<{
+    name: string;
+    email: string;
+    role: "employee" | "ceo" | "developer";
+    department: string;
+  }>({
     name: "",
     email: "",
-    role: "employee" as const,
+    role: "employee",
     department: ""
   });
 
