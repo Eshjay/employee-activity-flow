@@ -15,11 +15,19 @@ interface IndividualProgressChartProps {
   timeRange: "week" | "month" | "quarter";
 }
 
+interface ExtendedEmployeeData extends Profile {
+  totalActivities: number;
+  trend: 'up' | 'down' | 'stable';
+  trendPercentage: number;
+  lastActivity: string | null;
+  activities: Activity[];
+}
+
 export const IndividualProgressChart = ({ employees, activities, timeRange }: IndividualProgressChartProps) => {
-  const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<ExtendedEmployeeData | null>(null);
 
   // Process individual employee data
-  const processEmployeeData = () => {
+  const processEmployeeData = (): ExtendedEmployeeData[] => {
     return employees.map(employee => {
       const employeeActivities = activities.filter(activity => activity.user_id === employee.id);
       
@@ -54,7 +62,7 @@ export const IndividualProgressChart = ({ employees, activities, timeRange }: In
   };
 
   // Process daily progress for selected employee
-  const processEmployeeProgress = (employee: Profile) => {
+  const processEmployeeProgress = (employee: ExtendedEmployeeData) => {
     const now = new Date();
     let days = timeRange === "week" ? 7 : timeRange === "month" ? 30 : 90;
     
