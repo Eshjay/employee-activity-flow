@@ -42,7 +42,7 @@ export const IndividualProgressChart = ({ employees, activities, timeRange }: In
       
       const firstHalfAvg = firstHalf.length;
       const secondHalfAvg = secondHalf.length;
-      const trend = secondHalfAvg > firstHalfAvg ? 'up' : 
+      const trend: 'up' | 'down' | 'stable' = secondHalfAvg > firstHalfAvg ? 'up' : 
                    secondHalfAvg < firstHalfAvg ? 'down' : 'stable';
       const trendPercentage = firstHalfAvg > 0 ? 
         ((secondHalfAvg - firstHalfAvg) / firstHalfAvg * 100) : 0;
