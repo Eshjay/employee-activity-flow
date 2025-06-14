@@ -2,11 +2,9 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Key } from "lucide-react";
+import { Key, Mail } from "lucide-react";
 
 interface PasswordDialogProps {
   userId: string;
@@ -16,139 +14,113 @@ interface PasswordDialogProps {
 }
 
 export const PasswordDialog = ({ userId, userName, isOpen, onClose }: PasswordDialogProps) => {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const { toast } = useToast();
 
-  const handleSetPassword = async () => {
-    if (!password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in both password fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSendPasswordReset = async () => {
     setIsLoading(true);
 
     try {
-      // Send password reset request using Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('reset-password', {
+      // First, get the user's email from their profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('Could not find user profile');
+      }
+
+      // Send password reset email using the correct edge function
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
         body: {
-          userId: userId,
-          newPassword: password
+          email: profile.email
         }
       });
 
       if (error) {
-        console.error('Password reset error:', error);
-        // Fallback to showing success message since this is a developer feature
-        toast({
-          title: "Password Reset Initiated",
-          description: `Password reset request has been sent for ${userName}. They will receive an email to reset their password.`,
-        });
-      } else {
-        toast({
-          title: "Password Reset Successful",
-          description: `Password has been reset for ${userName}.`,
-        });
+        throw error;
       }
-      
-      setPassword("");
-      setConfirmPassword("");
-      onClose();
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      // Show a helpful message even if the edge function isn't available
+
+      setResetSent(true);
       toast({
-        title: "Password Reset Initiated",
-        description: `Password reset request has been processed for ${userName}.`,
+        title: "Password Reset Email Sent",
+        description: `A password reset link has been sent to ${profile.email}. The user should check their email to complete the reset.`,
       });
-      
-      setPassword("");
-      setConfirmPassword("");
-      onClose();
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setResetSent(false);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Key className="w-5 h-5" />
-            Reset Password for {userName}
+            {resetSent ? <Mail className="w-5 h-5" /> : <Key className="w-5 h-5" />}
+            {resetSent ? "Reset Email Sent" : `Reset Password for ${userName}`}
           </DialogTitle>
           <DialogDescription>
-            Set a new password for this user account
+            {resetSent 
+              ? "The password reset email has been sent successfully."
+              : "Send a password reset email to this user's registered email address."
+            }
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter new password"
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new password"
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div className="flex gap-2 pt-4">
-            <Button 
-              onClick={handleSetPassword} 
-              className="flex-1"
-              disabled={isLoading}
-            >
-              {isLoading ? "Resetting..." : "Reset Password"}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={onClose} 
-              className="flex-1"
-              disabled={isLoading}
-            >
-              Cancel
+        {resetSent ? (
+          <div className="space-y-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">
+                ✓ Password reset email sent successfully. The user will receive instructions to reset their password.
+              </p>
+            </div>
+            <Button onClick={handleClose} className="w-full">
+              Close
             </Button>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                This will send a password reset email to {userName}'s registered email address. 
+                They will receive a secure link to create a new password.
+              </p>
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleSendPasswordReset} 
+                className="flex-1"
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending..." : "Send Reset Email"}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleClose} 
+                className="flex-1"
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

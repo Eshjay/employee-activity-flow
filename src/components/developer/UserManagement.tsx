@@ -28,11 +28,17 @@ export const UserManagement = () => {
     department: ""
   });
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const searchLower = searchTerm.toLowerCase().trim();
+    if (!searchLower) return true;
+    
+    return (
+      user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      user.department.toLowerCase().includes(searchLower) ||
+      user.role.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleAddUser = async () => {
     const success = await addUser(newUser);
@@ -84,7 +90,7 @@ export const UserManagement = () => {
             <div>
               <CardTitle className="text-xl font-semibold">User Management</CardTitle>
               <CardDescription>
-                Manage user accounts, roles, and permissions
+                Manage user accounts, roles, and permissions ({users.length} total users)
               </CardDescription>
             </div>
             <AddUserDialog
@@ -101,6 +107,11 @@ export const UserManagement = () => {
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
           />
+          {searchTerm && (
+            <p className="text-sm text-slate-600 mt-2">
+              Showing {filteredUsers.length} of {users.length} users
+            </p>
+          )}
         </CardContent>
       </Card>
 

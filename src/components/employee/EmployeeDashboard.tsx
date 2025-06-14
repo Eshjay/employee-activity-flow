@@ -2,12 +2,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ActivityForm } from "./ActivityForm";
 import { ActivityHistoryData } from "./ActivityHistoryData";
 import { DashboardHeader } from "../shared/DashboardHeader";
-import { CheckCircle, Clock, Calendar } from "lucide-react";
+import { MessagingSystemData } from "../shared/MessagingSystemData";
+import { CheckCircle, Clock, Calendar, Mail } from "lucide-react";
 import { useActivities } from "@/hooks/useActivities";
 import { useAuth } from "@/hooks/useAuth";
+import { useMessages } from "@/hooks/useMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@/types/user";
 
@@ -19,8 +22,10 @@ interface EmployeeDashboardProps {
 export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) => {
   const { profile } = useAuth();
   const { activities, fetchActivities } = useActivities();
-  const [activeTab, setActiveTab] = useState<"log" | "history">("log");
+  const { getUnreadCount } = useMessages(profile?.id);
+  const [activeTab, setActiveTab] = useState<"log" | "history" | "messages">("log");
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false);
+  const [isMessagingOpen, setIsMessagingOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Check if user has submitted today
@@ -39,6 +44,8 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
     fetchActivities(); // Refresh activities list
   };
 
+  const unreadCount = getUnreadCount();
+
   const today = new Date().toLocaleDateString("en-US", {
     weekday: isMobile ? "short" : "long",
     year: "numeric",
@@ -53,13 +60,32 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
-            Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}!
-          </h1>
-          <p className="text-slate-600 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-            {today}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
+                Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}!
+              </h1>
+              <p className="text-slate-600 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                {today}
+              </p>
+            </div>
+            
+            {/* Messages Button */}
+            <Button
+              variant="outline"
+              onClick={() => setIsMessagingOpen(true)}
+              className="relative flex items-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              <span className="hidden sm:inline">Messages</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Status Card */}
@@ -116,6 +142,15 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
           <ActivityHistoryData />
         )}
       </div>
+
+      {/* Messaging System */}
+      {profile?.id && (
+        <MessagingSystemData
+          currentUserId={profile.id}
+          isOpen={isMessagingOpen}
+          onClose={() => setIsMessagingOpen(false)}
+        />
+      )}
     </div>
   );
 };
