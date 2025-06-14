@@ -4,93 +4,53 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Database, Table, Shield, Activity, Search, Play, RefreshCw } from "lucide-react";
+import { Database, Table, Shield, Activity, Search, RefreshCw } from "lucide-react";
 
 export const DatabaseManagement = () => {
-  const [queryResult, setQueryResult] = useState<any>(null);
-  const [customQuery, setCustomQuery] = useState("");
-  const [isExecuting, setIsExecuting] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const { toast } = useToast();
 
-  const executeQuery = async () => {
-    if (!customQuery.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a query to execute.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsExecuting(true);
-    try {
-      console.log('Executing custom query:', customQuery);
-      const { data, error } = await supabase.rpc('execute_sql', { 
-        query: customQuery 
-      });
-
-      if (error) {
-        console.error('Query execution error:', error);
-        toast({
-          title: "Query Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log('Query executed successfully:', data);
-        setQueryResult(data);
-        toast({
-          title: "Query Executed",
-          description: "Query executed successfully.",
-        });
-      }
-    } catch (error) {
-      console.error('Error executing query:', error);
-      toast({
-        title: "Error",
-        description: "Failed to execute query.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExecuting(false);
-    }
-  };
-
   const checkTableHealth = async () => {
+    setIsCheckingHealth(true);
     try {
       console.log('Checking database health...');
-      // Check table sizes and row counts
-      const { data: tableInfo, error } = await supabase
-        .from('information_schema.tables')
-        .select('table_name, table_schema')
-        .eq('table_schema', 'public');
+      
+      // Check if we can query each table
+      const healthChecks = await Promise.allSettled([
+        supabase.from('profiles').select('count', { count: 'exact', head: true }),
+        supabase.from('activities').select('count', { count: 'exact', head: true }),
+        supabase.from('messages').select('count', { count: 'exact', head: true }),
+        supabase.from('reports').select('count', { count: 'exact', head: true })
+      ]);
 
-      if (error) {
-        console.error('Health check error:', error);
-        toast({
-          title: "Health Check Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log('Database health check completed:', tableInfo);
-        toast({
-          title: "Health Check Complete",
-          description: "Database health check completed successfully.",
-        });
-      }
+      const results = {
+        profiles: healthChecks[0].status === 'fulfilled' ? healthChecks[0].value.count || 0 : 'Error',
+        activities: healthChecks[1].status === 'fulfilled' ? healthChecks[1].value.count || 0 : 'Error',
+        messages: healthChecks[2].status === 'fulfilled' ? healthChecks[2].value.count || 0 : 'Error',
+        reports: healthChecks[3].status === 'fulfilled' ? healthChecks[3].value.count || 0 : 'Error'
+      };
+
+      setHealthStatus(results);
+      console.log('Database health check completed:', results);
+      
+      toast({
+        title: "Health Check Complete",
+        description: "Database health check completed successfully.",
+      });
     } catch (error) {
       console.error('Error during health check:', error);
       toast({
-        title: "Error",
+        title: "Health Check Failed",
         description: "Failed to perform health check.",
         variant: "destructive",
       });
+    } finally {
+      setIsCheckingHealth(false);
     }
   };
 
@@ -98,26 +58,26 @@ export const DatabaseManagement = () => {
     {
       name: "profiles",
       description: "User profile information and roles",
-      rowCount: "~50",
-      status: "healthy"
+      rowCount: healthStatus?.profiles !== undefined ? `${healthStatus.profiles}` : "~50",
+      status: healthStatus?.profiles !== 'Error' ? "healthy" : "error"
     },
     {
       name: "activities",
       description: "Employee daily activity logs",
-      rowCount: "~200",
-      status: "healthy"
+      rowCount: healthStatus?.activities !== undefined ? `${healthStatus.activities}` : "~200",
+      status: healthStatus?.activities !== 'Error' ? "healthy" : "error"
     },
     {
       name: "messages",
       description: "Internal messaging system data",
-      rowCount: "~75",
-      status: "healthy"
+      rowCount: healthStatus?.messages !== undefined ? `${healthStatus.messages}` : "~75",
+      status: healthStatus?.messages !== 'Error' ? "healthy" : "error"
     },
     {
       name: "reports",
       description: "Generated system reports",
-      rowCount: "~25",
-      status: "healthy"
+      rowCount: healthStatus?.reports !== undefined ? `${healthStatus.reports}` : "~25",
+      status: healthStatus?.reports !== 'Error' ? "healthy" : "error"
     }
   ];
 
@@ -158,17 +118,25 @@ export const DatabaseManagement = () => {
           </h2>
           <p className="text-gray-600">Monitor and manage database schema, policies, and health</p>
         </div>
-        <Button onClick={checkTableHealth} variant="outline" className="flex items-center gap-2">
-          <Activity className="w-4 h-4" />
+        <Button 
+          onClick={checkTableHealth} 
+          disabled={isCheckingHealth}
+          variant="outline" 
+          className="flex items-center gap-2"
+        >
+          {isCheckingHealth ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Activity className="w-4 h-4" />
+          )}
           Health Check
         </Button>
       </div>
 
       <Tabs defaultValue="schema" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="schema">Schema</TabsTrigger>
           <TabsTrigger value="policies">RLS Policies</TabsTrigger>
-          <TabsTrigger value="query">Query Interface</TabsTrigger>
           <TabsTrigger value="health">Health Monitor</TabsTrigger>
         </TabsList>
 
@@ -198,7 +166,9 @@ export const DatabaseManagement = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium">{table.rowCount} rows</p>
-                      <p className="text-xs text-gray-500">Estimated</p>
+                      <p className="text-xs text-gray-500">
+                        {healthStatus ? "Actual" : "Estimated"}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -235,57 +205,6 @@ export const DatabaseManagement = () => {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="query">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="w-5 h-5" />
-                SQL Query Interface
-              </CardTitle>
-              <CardDescription>
-                Execute custom SQL queries for debugging and analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="query">SQL Query</Label>
-                <Textarea
-                  id="query"
-                  value={customQuery}
-                  onChange={(e) => setCustomQuery(e.target.value)}
-                  placeholder="SELECT * FROM profiles LIMIT 10;"
-                  rows={6}
-                  className="font-mono"
-                />
-              </div>
-              
-              <Button 
-                onClick={executeQuery} 
-                disabled={isExecuting}
-                className="flex items-center gap-2"
-              >
-                {isExecuting ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-                Execute Query
-              </Button>
-
-              {queryResult && (
-                <div className="mt-4">
-                  <Label>Query Result</Label>
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                    <pre className="text-sm overflow-auto">
-                      {JSON.stringify(queryResult, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -339,6 +258,20 @@ export const DatabaseManagement = () => {
                   <p className="text-sm text-gray-600">Total database size</p>
                 </div>
               </div>
+              
+              {healthStatus && (
+                <div className="mt-6">
+                  <h4 className="font-semibold mb-3">Table Row Counts</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Object.entries(healthStatus).map(([table, count]) => (
+                      <div key={table} className="p-3 bg-gray-50 rounded-lg">
+                        <h5 className="font-medium capitalize">{table}</h5>
+                        <p className="text-lg font-bold">{count}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
