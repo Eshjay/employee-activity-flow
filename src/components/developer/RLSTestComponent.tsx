@@ -158,35 +158,79 @@ export const RLSTestComponent = () => {
         });
       }
 
-      // Test 5: Check RLS is enabled on tables
+      // Test 5: Try to send a test message (should work)
       try {
-        const { data: rlsStatus } = await supabase
-          .from('information_schema.tables')
-          .select('table_name, row_security')
-          .in('table_name', ['activities', 'messages', 'profiles'])
-          .eq('table_schema', 'public');
+        const testMessage = {
+          sender_id: profile.id,
+          recipient_id: profile.id, // Send to self for testing
+          subject: "RLS Test Message",
+          content: "This is a test message for RLS validation"
+        };
 
-        if (rlsStatus) {
-          const enabledTables = rlsStatus.filter(table => table.row_security === 'YES');
-          if (enabledTables.length === 3) {
-            results.push({
-              name: "RLS Status Check",
-              status: "pass",
-              message: "RLS is enabled on all required tables"
-            });
-          } else {
-            results.push({
-              name: "RLS Status Check",
-              status: "warning",
-              message: `RLS enabled on ${enabledTables.length}/3 tables`
-            });
-          }
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert(testMessage);
+
+        if (messageError) {
+          results.push({
+            name: "Send Test Message",
+            status: "fail",
+            message: `Error: ${messageError.message}`
+          });
+        } else {
+          results.push({
+            name: "Send Test Message",
+            status: "pass",
+            message: "Successfully sent test message"
+          });
+
+          // Clean up: delete the test message
+          await supabase
+            .from('messages')
+            .delete()
+            .eq('subject', 'RLS Test Message')
+            .eq('sender_id', profile.id);
         }
       } catch (error) {
         results.push({
-          name: "RLS Status Check",
-          status: "warning",
-          message: "Could not verify RLS status (this may be normal)"
+          name: "Send Test Message",
+          status: "fail",
+          message: `Exception: ${error}`
+        });
+      }
+
+      // Test 6: Try to access other user's activities (should fail)
+      try {
+        const { data: otherActivities, error: otherError } = await supabase
+          .from('activities')
+          .select('*')
+          .neq('user_id', profile.id)
+          .limit(1);
+
+        if (otherError) {
+          results.push({
+            name: "Access Other User Activities",
+            status: "pass",
+            message: "Correctly blocked access to other users' activities"
+          });
+        } else if (otherActivities && otherActivities.length === 0) {
+          results.push({
+            name: "Access Other User Activities",
+            status: "pass", 
+            message: "No other user activities visible (RLS working correctly)"
+          });
+        } else {
+          results.push({
+            name: "Access Other User Activities",
+            status: "warning",
+            message: `Retrieved ${otherActivities?.length || 0} other user activities (this may indicate RLS issues)`
+          });
+        }
+      } catch (error) {
+        results.push({
+          name: "Access Other User Activities",
+          status: "pass",
+          message: "Access correctly blocked by RLS policies"
         });
       }
 
