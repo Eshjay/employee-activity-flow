@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, LogIn, UserPlus, Shield } from "lucide-react";
+import { Eye, EyeOff, LogIn, UserPlus, Shield, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Auth = () => {
@@ -192,6 +192,18 @@ const Auth = () => {
                     </Button>
                   </div>
                 </div>
+                
+                {/* Information about account access */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Info className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">Employee Access</span>
+                  </div>
+                  <p className="text-xs text-blue-700">
+                    Existing employees can sign in with their provided credentials. New employee accounts are created by administrators.
+                  </p>
+                </div>
+                
                 <Button
                   type="submit"
                   className="w-full"

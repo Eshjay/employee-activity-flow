@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Mail, Building2, TrendingUp, Clock } from "lucide-react";
-import { MessagingSystem } from "./MessagingSystem";
+import { MessagingSystemData } from "./MessagingSystemData";
+import { useActivities, type Activity } from "@/hooks/useActivities";
 
 interface Employee {
   id: number;
@@ -26,6 +27,25 @@ interface EmployeeDetailModalProps {
 
 export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }: EmployeeDetailModalProps) => {
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const { fetchUserActivities } = useActivities();
+
+  useEffect(() => {
+    const loadEmployeeActivities = async () => {
+      if (employee?.id) {
+        const activities = await fetchUserActivities(employee.id.toString());
+        // Get the 3 most recent activities
+        const sortedActivities = activities
+          .sort((a, b) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime())
+          .slice(0, 3);
+        setRecentActivities(sortedActivities);
+      }
+    };
+
+    if (isOpen && employee) {
+      loadEmployeeActivities();
+    }
+  }, [employee, isOpen, fetchUserActivities]);
 
   if (!employee) return null;
 
@@ -42,11 +62,16 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
     }
   };
 
-  const mockActivities = [
-    { date: "2024-06-12", description: "Code review and bug fixes", hours: 8 },
-    { date: "2024-06-11", description: "Feature development", hours: 7.5 },
-    { date: "2024-06-10", description: "Team meeting and planning", hours: 6 },
-  ];
+  const calculateHours = (activity: Activity) => {
+    if (activity.time_started && activity.time_ended) {
+      const start = new Date(`2000-01-01T${activity.time_started}`);
+      const end = new Date(`2000-01-01T${activity.time_ended}`);
+      const diffMs = end.getTime() - start.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      return Math.max(0, Math.round(diffHours * 2) / 2); // Round to nearest 0.5
+    }
+    return 8; // Default 8 hours if no time specified
+  };
 
   return (
     <>
@@ -103,15 +128,20 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
                 Recent Activities
               </h3>
               <div className="space-y-2">
-                {mockActivities.map((activity, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{activity.description}</p>
-                      <p className="text-xs text-slate-600">{new Date(activity.date).toLocaleDateString()}</p>
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{activity.title}</p>
+                        <p className="text-xs text-slate-600 truncate max-w-xs">{activity.description}</p>
+                        <p className="text-xs text-slate-600">{new Date(activity.date).toLocaleDateString()}</p>
+                      </div>
+                      <Badge variant="outline">{calculateHours(activity)}h</Badge>
                     </div>
-                    <Badge variant="outline">{activity.hours}h</Badge>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500 p-3 bg-slate-50 rounded-lg">No recent activities found</p>
+                )}
               </div>
             </div>
 
@@ -135,7 +165,7 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
 
       {/* Messaging System */}
       {currentUserId && (
-        <MessagingSystem
+        <MessagingSystemData
           currentUserId={currentUserId}
           recipientId={employee.id.toString()}
           recipientName={employee.name}
