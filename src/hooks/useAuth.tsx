@@ -46,6 +46,22 @@ export const useAuth = () => {
     }
   };
 
+  const updateLastLogin = async (userId: string) => {
+    try {
+      const { error } = await supabase.rpc('update_last_login', {
+        user_uuid: userId
+      });
+      
+      if (error) {
+        console.error('Error updating last login:', error);
+      } else {
+        console.log('Last login updated successfully for user:', userId);
+      }
+    } catch (error) {
+      console.error('Error calling update_last_login function:', error);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -55,6 +71,13 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Update last login when user signs in
+          if (event === 'SIGNED_IN') {
+            setTimeout(async () => {
+              await updateLastLogin(session.user.id);
+            }, 0);
+          }
+
           // Defer profile fetching to avoid potential deadlocks
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);

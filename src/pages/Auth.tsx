@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +39,22 @@ const Auth = () => {
     }
   }, [isAuthenticated, loading, navigate]);
 
+  const updateLastLogin = async (userId: string) => {
+    try {
+      const { error } = await supabase.rpc('update_last_login', {
+        user_uuid: userId
+      });
+      
+      if (error) {
+        console.error('Error updating last login:', error);
+      } else {
+        console.log('Last login updated successfully for user:', userId);
+      }
+    } catch (error) {
+      console.error('Error calling update_last_login function:', error);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -53,6 +68,9 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Update last login timestamp
+        await updateLastLogin(data.user.id);
+        
         toast({
           title: "Welcome back!",
           description: "You have been signed in successfully.",
