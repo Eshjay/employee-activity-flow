@@ -6,7 +6,8 @@ import { DashboardHeader } from "../shared/DashboardHeader";
 import { TeamOverviewData } from "./TeamOverviewData";
 import { ActivityReports } from "./ActivityReports";
 import { EnhancedAnalytics } from "./EnhancedAnalytics";
-import { BarChart3, Users, TrendingUp, Calendar, LineChart } from "lucide-react";
+import { QuickTestReports } from "./QuickTestReports";
+import { BarChart3, Users, TrendingUp, Calendar, LineChart, TestTube } from "lucide-react";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useActivities } from "@/hooks/useActivities";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,7 +19,7 @@ interface CEODashboardProps {
 }
 
 export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "reports" | "analytics">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "reports" | "analytics" | "testing">("overview");
   const { profiles } = useProfiles();
   const { activities } = useActivities();
   const isMobile = useIsMobile();
@@ -67,6 +68,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
     { key: "overview", label: "Team Overview", icon: Users },
     { key: "reports", label: "Activity Reports", icon: BarChart3 },
     { key: "analytics", label: "Enhanced Analytics", icon: LineChart },
+    { key: "testing", label: "Quick Testing", icon: TestTube },
   ];
 
   return (
@@ -123,6 +125,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         {activeTab === "overview" && <TeamOverviewData />}
         {activeTab === "reports" && <ActivityReports />}
         {activeTab === "analytics" && <EnhancedAnalytics />}
+        {activeTab === "testing" && <QuickTestReports />}
       </div>
     </div>
   );

@@ -168,31 +168,61 @@ export const generateWeeklyReport = async (): Promise<void> => {
     console.log('Fetched weekly activities:', activities?.length || 0);
     console.log('Total employees:', profiles?.length || 0);
 
-    // Calculate statistics
+    // Transform data for CSV export (FIXED: was using JSON before)
+    const reportData = (activities || []).map(activity => ({
+      employee: activity.profiles?.name || 'Unknown Employee',
+      department: activity.profiles?.department || 'Unknown Department',
+      date: activity.date,
+      hoursWorked: calculateHoursWorked(activity.time_started, activity.time_ended),
+      title: activity.title,
+      description: activity.description,
+      activities: activity.comments || activity.description,
+      timeStarted: activity.time_started || 'Not specified',
+      timeEnded: activity.time_ended || 'Not specified',
+      status: 'Completed',
+      weekPeriod: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+    }));
+
+    // Add summary statistics as additional rows
     const totalEmployees = profiles?.length || 0;
     const uniqueSubmitters = new Set((activities || []).map(a => a.user_id)).size;
     const totalHours = (activities || []).reduce((sum, activity) => {
       return sum + calculateHoursWorked(activity.time_started, activity.time_ended);
     }, 0);
-    const averageHoursPerEmployee = totalEmployees > 0 ? Math.round((totalHours / totalEmployees) * 100) / 100 : 0;
 
-    const weekStart = startDate.toLocaleDateString();
-    const weekEnd = endDate.toLocaleDateString();
+    // Add summary rows to the data
+    reportData.push({
+      employee: 'SUMMARY',
+      department: 'Statistics',
+      date: 'Week Summary',
+      hoursWorked: Math.round(totalHours * 100) / 100,
+      title: 'Total Statistics',
+      description: `Total Employees: ${totalEmployees}, Submitted: ${uniqueSubmitters}`,
+      activities: `${activities?.length || 0} total activities submitted`,
+      timeStarted: 'N/A',
+      timeEnded: 'N/A',
+      status: `${Math.round((uniqueSubmitters / Math.max(totalEmployees, 1)) * 100)}% submission rate`,
+      weekPeriod: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+    });
 
-    const reportData = [{
-      week: `${weekStart} - ${weekEnd}`,
-      totalEmployees: totalEmployees,
-      employeesSubmitted: uniqueSubmitters,
-      totalActivities: activities?.length || 0,
-      totalHours: Math.round(totalHours * 100) / 100,
-      averageHoursPerEmployee: averageHoursPerEmployee,
-      completedActivities: activities?.length || 0,
-      pendingActivities: Math.max(0, totalEmployees - uniqueSubmitters),
-      submissionRate: totalEmployees > 0 ? Math.round((uniqueSubmitters / totalEmployees) * 100) : 0
-    }];
+    if (reportData.length === 1) { // Only summary row exists
+      reportData.unshift({
+        employee: 'No submissions',
+        department: 'N/A',
+        date: startDateStr,
+        hoursWorked: 0,
+        title: 'No activities submitted this week',
+        description: 'No activities were submitted for this week period',
+        activities: 'No activities submitted this week',
+        timeStarted: 'N/A',
+        timeEnded: 'N/A',
+        status: 'No Data',
+        weekPeriod: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+      });
+    }
 
-    const filename = `weekly-summary-${endDateStr}.json`;
-    generateJSONContent(reportData, filename);
+    const filename = `weekly-report-${endDateStr}.csv`;
+    generateCSVContent(reportData, filename);
   } catch (error) {
     console.error('Error generating weekly report:', error);
     throw error;
