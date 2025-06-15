@@ -46,23 +46,23 @@ export const useAuth = () => {
   useEffect(() => {
     mounted.current = true;
 
+    // Create the actual handler functions by calling the factory functions with mounted ref
+    const authStateChangeHandler = handleAuthStateChange(mounted);
+    const initialSessionHandler = handleInitialSession(mounted);
+
     // Set up the auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        await handleAuthStateChange(event, session, mounted);
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateChangeHandler);
 
     // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      await handleInitialSession(session, mounted);
+      await initialSessionHandler(session);
     });
 
     return () => {
       mounted.current = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [handleAuthStateChange, handleInitialSession]);
 
   const signOut = async () => {
     try {
