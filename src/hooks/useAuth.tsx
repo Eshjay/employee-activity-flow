@@ -48,7 +48,7 @@ export const useAuth = () => {
           id: profileData.id,
           name: profileData.name,
           email: profileData.email,
-          role: profileData.role as "employee" | "ceo" | "developer",
+          role: "employee" | "ceo" | "developer",
           department: profileData.department
         };
       }
@@ -139,6 +139,4 @@ export const useAuth = () => {
   };
 };
 
-// Export cleanupAuthState to use in other places like SignInForm
-// (already exported at the top level now)
-export { cleanupAuthState };
+// No need to re-export cleanupAuthState; it's already exported at definition.
