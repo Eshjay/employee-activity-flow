@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { EmployeeDashboard } from "@/components/employee/EmployeeDashboard";
 import { CEODashboard } from "@/components/ceo/CEODashboard";
 import { DeveloperDashboard } from "@/components/developer/DeveloperDashboard";
+import { SessionExpiryNotification } from "@/components/shared/SessionExpiryNotification";
 import type { User } from "@/types/user";
 
 // Export the User type for backward compatibility
@@ -48,6 +49,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <SessionExpiryNotification />
       {profile.role === "employee" ? (
         <EmployeeDashboard user={user} onLogout={signOut} />
       ) : profile.role === "ceo" ? (

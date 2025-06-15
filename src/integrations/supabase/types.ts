@@ -134,6 +134,8 @@ export type Database = {
           last_login: string | null
           name: string
           role: string
+          session_created_at: string | null
+          session_expires_at: string | null
           status: string
           updated_at: string | null
         }
@@ -145,6 +147,8 @@ export type Database = {
           last_login?: string | null
           name: string
           role: string
+          session_created_at?: string | null
+          session_expires_at?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -156,6 +160,8 @@ export type Database = {
           last_login?: string | null
           name?: string
           role?: string
+          session_created_at?: string | null
+          session_expires_at?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -212,8 +218,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      clear_expired_session: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       is_developer: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_session_expired: {
+        Args: { user_uuid: string }
         Returns: boolean
       }
       update_last_login: {

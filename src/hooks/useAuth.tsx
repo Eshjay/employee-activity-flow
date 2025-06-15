@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { validateAndRefreshSession, checkSessionExpiration, clearExpiredSession } from '@/utils/sessionUtils';
 
 export interface AuthUser {
   id: string;
@@ -83,16 +84,33 @@ export const useAuth = () => {
     }
   };
 
+  const handleSessionExpiry = async () => {
+    console.log('Session expired - logging out user');
+    await signOut();
+  };
+
   useEffect(() => {
     // Set up the auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer profile fetching and last login update to avoid deadlocks
+        // Defer profile fetching and validation to avoid deadlocks
         if (event === 'SIGNED_IN' && session?.user) {
           setTimeout(async () => {
+            // Check if session is expired before proceeding
+            const isExpired = await checkSessionExpiration(session.user.id);
+            
+            if (isExpired) {
+              console.log('Session expired during sign-in, clearing session');
+              await clearExpiredSession(session.user.id);
+              await supabase.auth.signOut({ scope: 'global' });
+              setProfile(null);
+              setLoading(false);
+              return;
+            }
+
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
             setLoading(false);
@@ -106,12 +124,24 @@ export const useAuth = () => {
     );
 
     // Only after listener is set, check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
         setTimeout(async () => {
+          // Check if existing session is expired
+          const isExpired = await checkSessionExpiration(session.user.id);
+          
+          if (isExpired) {
+            console.log('Existing session expired, clearing session');
+            await clearExpiredSession(session.user.id);
+            await supabase.auth.signOut({ scope: 'global' });
+            setProfile(null);
+            setLoading(false);
+            return;
+          }
+
           const profileData = await fetchProfile(session.user.id);
           setProfile(profileData);
           setLoading(false);
@@ -125,8 +155,25 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Set up periodic session validation (every 5 minutes)
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      if (session?.user) {
+        const isValid = await validateAndRefreshSession();
+        if (!isValid) {
+          await handleSessionExpiry();
+        }
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(intervalId);
+  }, [session]);
+
   const signOut = async () => {
     try {
+      if (user?.id) {
+        await clearExpiredSession(user.id);
+      }
       cleanupAuthState();
       try {
         await supabase.auth.signOut({ scope: "global" });
@@ -149,6 +196,3 @@ export const useAuth = () => {
     isAuthenticated: !!session
   };
 };
-
-// No need to re-export cleanupAuthState; it's already exported at definition.
-

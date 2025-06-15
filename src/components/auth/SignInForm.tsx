@@ -6,10 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, LogIn, Info } from "lucide-react";
-import { updateLastLogin } from "@/utils/authUtils";
 import { cleanupAuthState } from "@/hooks/useAuth";
-
-// Removed useNavigate import (redirect now handled globally)
+import { checkSessionExpiration, clearExpiredSession } from "@/utils/sessionUtils";
 
 export const SignInForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,11 +37,23 @@ export const SignInForm = () => {
       }
 
       if (data.user) {
+        // Check if this is a returning user with an expired session
+        const wasExpired = await checkSessionExpiration(data.user.id);
+        
+        if (wasExpired) {
+          // Clear the expired session data
+          await clearExpiredSession(data.user.id);
+          toast({
+            title: "Session Renewed",
+            description: "Your previous session had expired. You've been signed in with a new 7-day session.",
+          });
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "You have been signed in successfully.",
+          });
+        }
         // updateLastLogin will be called later AFTER proper session established (in useAuth hook)
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
         // No direct navigation here: rely on Auth.tsx effect
       }
     } catch (error: any) {
@@ -99,10 +109,10 @@ export const SignInForm = () => {
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-center gap-2 mb-1">
           <Info className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-blue-800">Employee Access</span>
+          <span className="text-sm font-medium text-blue-800">Session Security</span>
         </div>
         <p className="text-xs text-blue-700">
-          Existing employees can sign in with their provided credentials. New employee accounts are created by administrators.
+          For security, your session will automatically expire after 7 days. You'll be prompted to sign in again when this happens.
         </p>
       </div>
       <Button
