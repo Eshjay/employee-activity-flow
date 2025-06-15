@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, LogIn, Info } from "lucide-react";
+import { Eye, EyeOff, LogIn, Info, AlertCircle } from "lucide-react";
 import { cleanupAuthState } from "@/hooks/useAuth";
 import { checkSessionExpiration, clearExpiredSession } from "@/utils/sessionUtils";
 
@@ -14,29 +14,38 @@ export const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       // Clean up existing tokens and log out everywhere before signing in
       cleanupAuthState();
       try {
         await supabase.auth.signOut({ scope: "global" });
-      } catch {}
+      } catch (e) {
+        // Continue even if this fails
+        console.log('Sign out during cleanup failed, continuing...');
+      }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in with email:', signInEmail);
+
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: signInEmail,
         password: signInPassword,
       });
 
-      if (error) {
-        throw error;
+      if (authError) {
+        throw authError;
       }
 
       if (data.user) {
+        console.log('Sign in successful for user:', data.user.id);
+        
         // Check if this is a returning user with an expired session
         const wasExpired = await checkSessionExpiration(data.user.id);
         
@@ -53,13 +62,30 @@ export const SignInForm = () => {
             description: "You have been signed in successfully.",
           });
         }
-        // updateLastLogin will be called later AFTER proper session established (in useAuth hook)
-        // No direct navigation here: rely on Auth.tsx effect
+        
+        // Force a page refresh to ensure clean state
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
       }
     } catch (error: any) {
+      console.error('Sign in error:', error);
+      let errorMessage = "An error occurred during sign in.";
+      
+      if (error.message?.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (error.message?.includes("Email not confirmed")) {
+        errorMessage = "Please check your email and click the confirmation link before signing in.";
+      } else if (error.message?.includes("Too many requests")) {
+        errorMessage = "Too many login attempts. Please wait a few minutes before trying again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
       toast({
         title: "Sign in failed",
-        description: error.message || "An error occurred during sign in.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -69,6 +95,16 @@ export const SignInForm = () => {
 
   return (
     <form onSubmit={handleSignIn} className="space-y-4">
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <span className="text-sm font-medium text-red-800">Error</span>
+          </div>
+          <p className="text-xs text-red-700 mt-1">{error}</p>
+        </div>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="signin-email">Email</Label>
         <Input
@@ -78,6 +114,7 @@ export const SignInForm = () => {
           onChange={(e) => setSignInEmail(e.target.value)}
           placeholder="Enter your email"
           required
+          disabled={isLoading}
         />
       </div>
       <div className="space-y-2">
@@ -90,6 +127,7 @@ export const SignInForm = () => {
             onChange={(e) => setSignInPassword(e.target.value)}
             placeholder="Enter your password"
             required
+            disabled={isLoading}
           />
           <Button
             type="button"
@@ -97,6 +135,7 @@ export const SignInForm = () => {
             size="sm"
             className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
             onClick={() => setShowPassword(!showPassword)}
+            disabled={isLoading}
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />

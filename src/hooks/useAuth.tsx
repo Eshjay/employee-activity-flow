@@ -12,7 +12,7 @@ export interface AuthUser {
   department: string;
 }
 
-// Clean up auth state utility (move to top-level)
+// Clean up auth state utility
 export const cleanupAuthState = () => {
   try {
     Object.keys(localStorage).forEach((key) => {
@@ -25,7 +25,9 @@ export const cleanupAuthState = () => {
         sessionStorage.removeItem(key);
       }
     });
-  } catch (e) {}
+  } catch (e) {
+    console.error('Error cleaning up auth state:', e);
+  }
 };
 
 // Helper to assert the role is correct
@@ -33,7 +35,6 @@ const parseRole = (input: any): "employee" | "ceo" | "developer" => {
   if (input === "employee" || input === "ceo" || input === "developer") {
     return input;
   }
-  // fallback if roles ever come as number (legacy or seed data), just default to "employee"
   return "employee";
 };
 
@@ -42,31 +43,78 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const fetchProfile = async (userId: string) => {
+  const createMissingProfile = async (userId: string, email: string) => {
     try {
+      console.log('Creating missing profile for user:', userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: email.split('@')[0],
+          email: email,
+          role: 'employee',
+          department: 'General',
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        return null;
+      }
+
+      console.log('Successfully created profile:', data);
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: parseRole(data.role),
+        department: data.department,
+      } as AuthUser;
+    } catch (error) {
+      console.error('Error in createMissingProfile:', error);
+      return null;
+    }
+  };
+
+  const fetchProfile = async (userId: string, email: string) => {
+    try {
+      console.log('Fetching profile for user:', userId);
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
+
       if (error) {
         console.error('Error fetching profile:', error);
+        setAuthError('Failed to fetch user profile');
         return null;
       }
-      if (profileData) {
-        // Make sure role is a string literal (never a number)
-        return {
-          id: profileData.id,
-          name: profileData.name,
-          email: profileData.email,
-          role: parseRole(profileData.role),
-          department: profileData.department,
-        } as AuthUser;
+
+      if (!profileData) {
+        console.log('Profile not found, creating new profile');
+        const newProfile = await createMissingProfile(userId, email);
+        if (!newProfile) {
+          setAuthError('Failed to create user profile');
+          return null;
+        }
+        return newProfile;
       }
-      return null;
+
+      return {
+        id: profileData.id,
+        name: profileData.name,
+        email: profileData.email,
+        role: parseRole(profileData.role),
+        department: profileData.department,
+      } as AuthUser;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+      setAuthError('Failed to load user data');
       return null;
     }
   };
@@ -90,69 +138,117 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
-    // Set up the auth state listener FIRST
+    let mounted = true;
+
+    // Set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
+        setAuthError(null);
 
-        // Defer profile fetching and validation to avoid deadlocks
         if (event === 'SIGNED_IN' && session?.user) {
+          // Defer profile fetching to avoid deadlocks
           setTimeout(async () => {
-            // Check if session is expired before proceeding
-            const isExpired = await checkSessionExpiration(session.user.id);
-            
-            if (isExpired) {
-              console.log('Session expired during sign-in, clearing session');
-              await clearExpiredSession(session.user.id);
-              await supabase.auth.signOut({ scope: 'global' });
-              setProfile(null);
-              setLoading(false);
-              return;
-            }
+            if (!mounted) return;
 
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            setLoading(false);
-            await updateLastLogin(session.user.id);
-          }, 0);
+            try {
+              // Check if session is expired before proceeding
+              const isExpired = await checkSessionExpiration(session.user.id);
+              
+              if (isExpired) {
+                console.log('Session expired during sign-in, clearing session');
+                await clearExpiredSession(session.user.id);
+                await supabase.auth.signOut({ scope: 'global' });
+                if (mounted) {
+                  setProfile(null);
+                  setLoading(false);
+                }
+                return;
+              }
+
+              const profileData = await fetchProfile(session.user.id, session.user.email || '');
+              if (mounted) {
+                setProfile(profileData);
+                setLoading(false);
+                if (profileData) {
+                  await updateLastLogin(session.user.id);
+                }
+              }
+            } catch (error) {
+              console.error('Error in auth state change handler:', error);
+              if (mounted) {
+                setAuthError('Authentication error occurred');
+                setLoading(false);
+              }
+            }
+          }, 100);
         } else if (!session?.user) {
-          setProfile(null);
-          setLoading(false);
+          if (mounted) {
+            setProfile(null);
+            setLoading(false);
+          }
         }
       }
     );
 
-    // Only after listener is set, check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+
+      console.log('Initial session check:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
         setTimeout(async () => {
-          // Check if existing session is expired
-          const isExpired = await checkSessionExpiration(session.user.id);
-          
-          if (isExpired) {
-            console.log('Existing session expired, clearing session');
-            await clearExpiredSession(session.user.id);
-            await supabase.auth.signOut({ scope: 'global' });
-            setProfile(null);
-            setLoading(false);
-            return;
-          }
+          if (!mounted) return;
 
-          const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
-          setLoading(false);
-          await updateLastLogin(session.user.id);
-        }, 0);
+          try {
+            // Check if existing session is expired
+            const isExpired = await checkSessionExpiration(session.user.id);
+            
+            if (isExpired) {
+              console.log('Existing session expired, clearing session');
+              await clearExpiredSession(session.user.id);
+              await supabase.auth.signOut({ scope: 'global' });
+              if (mounted) {
+                setProfile(null);
+                setLoading(false);
+              }
+              return;
+            }
+
+            const profileData = await fetchProfile(session.user.id, session.user.email || '');
+            if (mounted) {
+              setProfile(profileData);
+              setLoading(false);
+              if (profileData) {
+                await updateLastLogin(session.user.id);
+              }
+            }
+          } catch (error) {
+            console.error('Error in initial session check:', error);
+            if (mounted) {
+              setAuthError('Failed to load user session');
+              setLoading(false);
+            }
+          }
+        }, 100);
       } else {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Set up periodic session validation (every 5 minutes)
@@ -177,10 +273,13 @@ export const useAuth = () => {
       cleanupAuthState();
       try {
         await supabase.auth.signOut({ scope: "global" });
-      } catch {}
+      } catch (e) {
+        console.error('Error during sign out:', e);
+      }
       setUser(null);
       setSession(null);
       setProfile(null);
+      setAuthError(null);
       window.location.href = "/auth";
     } catch (error) {
       console.error("Error signing out:", error);
@@ -193,6 +292,7 @@ export const useAuth = () => {
     profile,
     loading,
     signOut,
-    isAuthenticated: !!session
+    isAuthenticated: !!session && !!profile,
+    authError
   };
 };
