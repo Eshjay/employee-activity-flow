@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,27 +10,27 @@ export interface AuthUser {
   department: string;
 }
 
+// Clean up auth state utility (move to top-level)
+export const cleanupAuthState = () => {
+  try {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
+        localStorage.removeItem(key);
+      }
+    });
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  } catch (e) {}
+};
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // This utility can be imported/reused for global auth state clean-up
-  const cleanupAuthState = () => {
-    try {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-          localStorage.removeItem(key);
-        }
-      });
-      Object.keys(sessionStorage).forEach((key) => {
-        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-          sessionStorage.removeItem(key);
-        }
-      });
-    } catch (e) {}
-  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -141,4 +140,5 @@ export const useAuth = () => {
 };
 
 // Export cleanupAuthState to use in other places like SignInForm
+// (already exported at the top level now)
 export { cleanupAuthState };
