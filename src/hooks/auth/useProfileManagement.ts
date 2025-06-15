@@ -11,17 +11,25 @@ const parseRole = (input: any): "employee" | "ceo" | "developer" => {
 };
 
 export const useProfileManagement = () => {
-  const createMissingProfile = async (userId: string, email: string): Promise<AuthUser | null> => {
+  const createMissingProfile = async (
+    userId: string, 
+    email: string, 
+    roleHint?: string
+  ): Promise<AuthUser | null> => {
     try {
-      console.log('Creating missing profile for user:', userId);
+      console.log('Creating missing profile for user:', userId, 'with role hint:', roleHint);
+      
+      // Use the role hint if provided and valid, otherwise default to employee
+      const role = parseRole(roleHint);
+      
       const { data, error } = await supabase
         .from('profiles')
         .insert({
           id: userId,
           name: email.split('@')[0],
           email: email,
-          role: 'employee',
-          department: 'General',
+          role: role,
+          department: role === 'developer' ? 'IT' : 'General',
           status: 'active'
         })
         .select()
@@ -61,8 +69,16 @@ export const useProfileManagement = () => {
       }
 
       if (!profileData) {
-        console.log('Profile not found, creating new profile');
-        const newProfile = await createMissingProfile(userId, email);
+        console.log('Profile not found, checking user metadata for role information');
+        
+        // Try to get the user's metadata to extract role information
+        const { data: { user } } = await supabase.auth.getUser();
+        const roleFromMetadata = user?.user_metadata?.role;
+        
+        console.log('User metadata role:', roleFromMetadata);
+        console.log('Creating new profile with role from metadata');
+        
+        const newProfile = await createMissingProfile(userId, email, roleFromMetadata);
         return newProfile;
       }
 

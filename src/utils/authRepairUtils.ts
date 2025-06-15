@@ -13,6 +13,7 @@ export const repairAuthDataConsistency = async (): Promise<{ success: boolean; m
     }
 
     console.log('Checking profile for user:', user.id);
+    console.log('User metadata:', user.user_metadata);
     
     // Check if profile exists
     const { data: existingProfile, error: profileError } = await supabase
@@ -29,15 +30,22 @@ export const repairAuthDataConsistency = async (): Promise<{ success: boolean; m
     if (!existingProfile) {
       console.log('Creating missing profile for user:', user.id);
       
-      // Create missing profile
+      // Extract role from user metadata if available
+      const roleFromMetadata = user.user_metadata?.role || 'employee';
+      const nameFromMetadata = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      const departmentFromMetadata = user.user_metadata?.department || 'General';
+      
+      console.log('Using metadata - role:', roleFromMetadata, 'name:', nameFromMetadata, 'department:', departmentFromMetadata);
+      
+      // Create missing profile with metadata information
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
           id: user.id,
-          name: user.email?.split('@')[0] || 'User',
+          name: nameFromMetadata,
           email: user.email || '',
-          role: 'employee',
-          department: 'General',
+          role: roleFromMetadata,
+          department: departmentFromMetadata,
           status: 'active'
         });
 
@@ -46,12 +54,12 @@ export const repairAuthDataConsistency = async (): Promise<{ success: boolean; m
         return { success: false, message: 'Failed to create profile' };
       }
 
-      console.log('Successfully created missing profile');
-      return { success: true, message: 'Profile created successfully' };
+      console.log('Successfully created missing profile with role:', roleFromMetadata);
+      return { success: true, message: `Profile created successfully with role: ${roleFromMetadata}` };
     }
 
-    console.log('Profile already exists, no repair needed');
-    return { success: true, message: 'Profile already exists' };
+    console.log('Profile already exists with role:', existingProfile.role);
+    return { success: true, message: `Profile already exists with role: ${existingProfile.role}` };
     
   } catch (error) {
     console.error('Error in repairAuthDataConsistency:', error);
@@ -82,6 +90,12 @@ export const checkAuthConsistency = async (): Promise<{ consistent: boolean; iss
 
     if (!profile) {
       issues.push('Profile missing for authenticated user');
+    } else {
+      // Check if role matches user metadata
+      const metadataRole = user.user_metadata?.role;
+      if (metadataRole && profile.role !== metadataRole) {
+        issues.push(`Role mismatch: profile has '${profile.role}' but metadata has '${metadataRole}'`);
+      }
     }
 
     return { consistent: issues.length === 0, issues };

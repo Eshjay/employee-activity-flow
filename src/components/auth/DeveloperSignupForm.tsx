@@ -37,6 +37,13 @@ export const DeveloperSignupForm = () => {
     }
 
     try {
+      console.log('Starting developer signup with data:', {
+        email: developerSignupData.email,
+        name: developerSignupData.name,
+        role: "developer",
+        department: developerSignupData.department
+      });
+
       const { data, error } = await supabase.auth.signUp({
         email: developerSignupData.email,
         password: developerSignupData.password,
@@ -44,19 +51,26 @@ export const DeveloperSignupForm = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             name: developerSignupData.name,
-            role: "developer",
-            department: developerSignupData.department
+            role: "developer", // Explicitly set as developer
+            department: developerSignupData.department || "IT"
           }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Signup error:', error);
+        throw error;
+      }
 
       if (data.user) {
+        console.log('Developer signup successful:', data.user.id);
+        console.log('User metadata:', data.user.user_metadata);
+        
         toast({
           title: "Developer account created!",
           description: "Please check your email to verify your account.",
         });
+        
         // Reset form
         setDeveloperSignupData({
           name: "",
@@ -67,6 +81,7 @@ export const DeveloperSignupForm = () => {
         });
       }
     } catch (error: any) {
+      console.error('Developer signup failed:', error);
       toast({
         title: "Sign up failed",
         description: error.message || "An error occurred during sign up.",
