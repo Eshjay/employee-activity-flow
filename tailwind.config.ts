@@ -20,6 +20,12 @@ export default {
 		},
 		extend: {
 			colors: {
+				// Brand colors
+				"brand-primary": "#27378a",
+				"brand-secondary": "#6c7ddc",
+				"brand-emerald": "#17535f",
+				"brand-bg-light": "#f5f6fc",
+				"brand-bg-dark": "#d7ddf4",
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,6 +8,13 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
+    /* Brand palette */
+    --brand-primary: #27378a;
+    --brand-secondary: #6c7ddc;
+    --brand-emerald: #17535f;
+    --brand-bg-light: #f5f6fc;
+    --brand-bg-dark: #d7ddf4;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -238,5 +244,21 @@
 
   .text-pretty {
     text-wrap: pretty;
+  }
+}
+
+/* BRAND HELPERS */
+@layer components {
+  .text-brand-primary {
+    color: var(--brand-primary);
+  }
+  .text-brand-secondary {
+    color: var(--brand-secondary);
+  }
+  .bg-brand-primary {
+    background-color: var(--brand-primary);
+  }
+  .bg-brand-secondary {
+    background-color: var(--brand-secondary);
   }
 }

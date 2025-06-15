@@ -2,10 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Building2, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@/types/user";
+import { BrandLogo } from "./BrandLogo";
 
 interface DashboardHeaderProps {
   user: User;
@@ -33,20 +34,17 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
     <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
         <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-0">
-          {/* Logo and Brand */}
+          {/* Brand logo and text */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Building2 className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-            </div>
+            <BrandLogo size={isMobile ? 36 : 52} className="rounded-lg shadow-soft bg-gradient-to-br from-[#6b7ddb1d] to-[#f5f6fc]" />
             <div className="hidden sm:block">
-              <h1 className="text-lg sm:text-xl font-bold text-slate-800">Activity Tracker</h1>
-              <p className="text-xs sm:text-sm text-slate-600">Employee Management System</p>
+              <h1 className="text-lg sm:text-xl font-bold text-brand-primary">Allure CV Signatures</h1>
+              <p className="text-xs sm:text-sm text-brand-secondary">Staff Activity Management</p>
             </div>
             <div className="sm:hidden">
-              <h1 className="text-base font-bold text-slate-800">Activity Tracker</h1>
+              <h1 className="text-base font-bold text-brand-primary">Allure CV</h1>
             </div>
           </div>
-
           {/* Mobile Menu Button */}
           {isMobile && (
             <Button
@@ -54,11 +52,11 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="sm:hidden"
+              aria-label="Menu"
             >
               <Menu className="w-5 h-5" />
             </Button>
           )}
-
           {/* Desktop User Info and Actions */}
           <div className={`${isMobile ? "hidden" : "flex"} items-center gap-2 sm:gap-4`}>
             <div className="flex items-center gap-2 sm:gap-3">
@@ -74,7 +72,6 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
                 </div>
               </div>
             </div>
-            
             <Button 
               variant="outline" 
               size={isMobile ? "sm" : "default"}
@@ -86,7 +83,6 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
             </Button>
           </div>
         </div>
-
         {/* Mobile Menu */}
         {isMobile && isMenuOpen && (
           <div className="mt-2 pt-2 border-t border-slate-200 sm:hidden">
@@ -118,4 +114,3 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
     </header>
   );
 };
-
