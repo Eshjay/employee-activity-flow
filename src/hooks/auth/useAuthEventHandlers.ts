@@ -29,14 +29,13 @@ export const useAuthEventHandlers = () => {
 
     if (event === 'SIGNED_IN' && session?.user) {
       console.log('Processing sign in event');
-      // Process session with improved error handling
       await processSession(session, mounted, {
         setProfile: setters.setProfile,
         setLoading: setters.setLoading,
         setAuthError: setters.setAuthError
       });
-    } else if (!session?.user) {
-      console.log('No user in session, clearing profile and stopping loading');
+    } else if (event === 'SIGNED_OUT' || !session?.user) {
+      console.log('Processing sign out or no user, clearing profile and stopping loading');
       if (mounted.current) {
         setters.setProfile(null);
         setters.setLoading(false);
@@ -66,7 +65,6 @@ export const useAuthEventHandlers = () => {
 
     if (session?.user) {
       console.log('Processing initial session');
-      // Process session with improved error handling
       await processSession(session, mounted, {
         setProfile: setters.setProfile,
         setLoading: setters.setLoading,

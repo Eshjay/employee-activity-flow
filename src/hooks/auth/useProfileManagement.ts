@@ -58,31 +58,18 @@ export const useProfileManagement = () => {
     try {
       console.log('Fetching profile for user:', userId);
       
-      // Add a timeout to prevent hanging requests
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
-      );
-
-      const fetchPromise = supabase
+      const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      const { data: profileData, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-
       if (error) {
         console.error('Error fetching profile:', error);
-        // If it's a network error, return a fallback profile instead of null
-        if (error.message?.includes('Failed to fetch') || error.message?.includes('timeout')) {
-          console.log('Network error detected, creating fallback profile');
-          return {
-            id: userId,
-            name: email.split('@')[0],
-            email: email,
-            role: 'employee' as const,
-            department: 'General',
-          };
+        // If profile doesn't exist and it's a not found error, try to create one
+        if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
+          console.log('Profile not found, attempting to create one');
+          return await createMissingProfile(userId, email);
         }
         return null;
       }
@@ -101,15 +88,9 @@ export const useProfileManagement = () => {
           const newProfile = await createMissingProfile(userId, email, roleFromMetadata);
           return newProfile;
         } catch (metadataError) {
-          console.warn('Could not fetch user metadata, using fallback profile:', metadataError);
-          // Return a fallback profile if metadata fetch fails
-          return {
-            id: userId,
-            name: email.split('@')[0],
-            email: email,
-            role: 'employee' as const,
-            department: 'General',
-          };
+          console.warn('Could not fetch user metadata, creating default profile:', metadataError);
+          // Return a fallback profile
+          return await createMissingProfile(userId, email, 'employee');
         }
       }
 
