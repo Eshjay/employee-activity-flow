@@ -10,6 +10,10 @@ const parseRole = (input: any): "employee" | "ceo" | "developer" => {
   return "employee";
 };
 
+// Cache for profile data to reduce database calls
+const profileCache = new Map<string, { profile: AuthUser; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export const useProfileManagement = () => {
   const createMissingProfile = async (
     userId: string, 
@@ -19,7 +23,6 @@ export const useProfileManagement = () => {
     try {
       console.log('Creating missing profile for user:', userId, 'with role hint:', roleHint);
       
-      // Use the role hint if provided and valid, otherwise default to employee
       const role = parseRole(roleHint);
       
       const { data, error } = await supabase
@@ -40,14 +43,19 @@ export const useProfileManagement = () => {
         return null;
       }
 
-      console.log('Successfully created profile:', data);
-      return {
+      const profile = {
         id: data.id,
         name: data.name,
         email: data.email,
         role: parseRole(data.role),
         department: data.department,
       } as AuthUser;
+
+      // Cache the newly created profile
+      profileCache.set(userId, { profile, timestamp: Date.now() });
+      console.log('Successfully created and cached profile:', data);
+      
+      return profile;
     } catch (error) {
       console.error('Error in createMissingProfile:', error);
       return null;
@@ -56,6 +64,13 @@ export const useProfileManagement = () => {
 
   const fetchProfile = async (userId: string, email: string): Promise<AuthUser | null> => {
     try {
+      // Check cache first
+      const cached = profileCache.get(userId);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log('Using cached profile for user:', userId);
+        return cached.profile;
+      }
+
       console.log('Fetching profile for user:', userId);
       
       const { data: profileData, error } = await supabase
@@ -64,70 +79,77 @@ export const useProfileManagement = () => {
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
-        // If profile doesn't exist and it's a not found error, try to create one
-        if (error.code === 'PGRST116' || error.message?.includes('No rows found')) {
-          console.log('Profile not found, attempting to create one');
-          return await createMissingProfile(userId, email);
-        }
         return null;
       }
 
       if (!profileData) {
         console.log('Profile not found, checking user metadata for role information');
         
-        // Try to get the user's metadata to extract role information
         try {
           const { data: { user } } = await supabase.auth.getUser();
           const roleFromMetadata = user?.user_metadata?.role;
           
-          console.log('User metadata role:', roleFromMetadata);
-          console.log('Creating new profile with role from metadata');
-          
-          const newProfile = await createMissingProfile(userId, email, roleFromMetadata);
-          return newProfile;
+          console.log('Creating new profile with role from metadata:', roleFromMetadata);
+          return await createMissingProfile(userId, email, roleFromMetadata);
         } catch (metadataError) {
           console.warn('Could not fetch user metadata, creating default profile:', metadataError);
-          // Return a fallback profile
           return await createMissingProfile(userId, email, 'employee');
         }
       }
 
-      return {
+      const profile = {
         id: profileData.id,
         name: profileData.name,
         email: profileData.email,
         role: parseRole(profileData.role),
         department: profileData.department,
       } as AuthUser;
+
+      // Cache the fetched profile
+      profileCache.set(userId, { profile, timestamp: Date.now() });
+      
+      return profile;
     } catch (error) {
       console.error('Error in fetchProfile:', error);
+      
       // Always return a fallback profile instead of null to prevent loading loops
-      console.log('Returning fallback profile due to error');
-      return {
+      const fallbackProfile = {
         id: userId,
         name: email.split('@')[0],
         email: email,
         role: 'employee' as const,
         department: 'General',
       };
+      
+      // Cache fallback profile briefly
+      profileCache.set(userId, { profile: fallbackProfile, timestamp: Date.now() });
+      console.log('Returning and caching fallback profile due to error');
+      
+      return fallbackProfile;
     }
   };
 
   const updateLastLogin = async (userId: string) => {
-    try {
-      const { error } = await supabase.rpc('update_last_login', {
-        user_uuid: userId
-      });
-      if (error) {
-        console.error('Error updating last login:', error);
-      } else {
-        console.log('Successfully updated last login for user:', userId);
+    // Run as background task to avoid blocking UI
+    setTimeout(async () => {
+      try {
+        const { error } = await supabase.rpc('update_last_login', {
+          user_uuid: userId
+        });
+        if (error) {
+          console.error('Error updating last login:', error);
+        } else {
+          console.log('Successfully updated last login for user:', userId);
+          
+          // Invalidate cache to ensure fresh data on next fetch
+          profileCache.delete(userId);
+        }
+      } catch (error) {
+        console.error('Error calling update_last_login function:', error);
       }
-    } catch (error) {
-      console.error('Error calling update_last_login function:', error);
-    }
+    }, 100);
   };
 
   return {

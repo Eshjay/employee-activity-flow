@@ -28,26 +28,24 @@ export const useSessionManager = () => {
     try {
       console.log('Processing session for user:', session.user.id);
       
-      // Always ensure loading is set to false, regardless of success or failure
+      // Optimized profile fetching with error handling
       const profileData = await fetchProfile(session.user.id, session.user.email || '');
       
       if (!mounted.current) {
         console.log('Component unmounted during profile fetch');
-        return; // Check if still mounted after async operation
+        return;
       }
       
       console.log('Profile fetch completed:', profileData ? 'success' : 'failed');
       
-      // Set profile (could be null or fallback profile)
+      // Set profile and clear loading state
       setters.setProfile(profileData);
       setters.setLoading(false);
-      setters.setAuthError(null); // Clear any previous errors
+      setters.setAuthError(null);
       
       if (profileData) {
-        // Update last login in background without waiting
-        updateLastLogin(session.user.id).catch(error => {
-          console.warn('Failed to update last login:', error);
-        });
+        // Update last login as background task
+        updateLastLogin(session.user.id);
       }
     } catch (error) {
       console.error('Error processing session:', error);
@@ -64,7 +62,7 @@ export const useSessionManager = () => {
         console.log('Setting fallback profile due to error');
         setters.setProfile(fallbackProfile);
         setters.setLoading(false);
-        setters.setAuthError(null); // Don't show error, use fallback instead
+        setters.setAuthError(null);
       }
     }
   };

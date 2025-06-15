@@ -1,8 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Optimized session validation with caching
+let lastSessionCheck = 0;
+const SESSION_CHECK_INTERVAL = 30000; // 30 seconds
+
 export const validateAndRefreshSession = async (): Promise<boolean> => {
   try {
+    // Throttle session checks to reduce database load
+    const now = Date.now();
+    if (now - lastSessionCheck < SESSION_CHECK_INTERVAL) {
+      return true; // Assume valid if checked recently
+    }
+    lastSessionCheck = now;
+
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
@@ -42,15 +53,11 @@ export const validateAndRefreshSession = async (): Promise<boolean> => {
   }
 };
 
-// Legacy function kept for backward compatibility but simplified
+// Simplified legacy functions for backward compatibility
 export const checkSessionExpiration = async (userId: string): Promise<boolean> => {
-  // Always return false (not expired) to prevent the infinite loop
-  // Let Supabase handle session expiration natively
-  return false;
+  return false; // Always return false to prevent loops
 };
 
-// Legacy function kept for backward compatibility but simplified
 export const clearExpiredSession = async (userId: string) => {
-  // Do nothing - let Supabase handle session cleanup
   console.log('Session cleanup skipped - handled by Supabase');
 };

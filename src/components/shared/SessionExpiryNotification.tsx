@@ -1,10 +1,8 @@
 
 import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
 export const SessionExpiryNotification = () => {
-  const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -12,20 +10,27 @@ export const SessionExpiryNotification = () => {
 
     console.log('SessionExpiryNotification: Component mounted for authenticated user');
 
-    // Simplified session check on visibility change only
-    const handleVisibilityChange = async () => {
+    // Simplified session monitoring - only log visibility changes
+    const handleVisibilityChange = () => {
       if (!document.hidden && isAuthenticated) {
-        // Just log that user returned to the app
         console.log('User returned to application');
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Throttle visibility change events
+    let visibilityTimeout: NodeJS.Timeout;
+    const throttledVisibilityChange = () => {
+      if (visibilityTimeout) clearTimeout(visibilityTimeout);
+      visibilityTimeout = setTimeout(handleVisibilityChange, 1000);
+    };
+
+    document.addEventListener('visibilitychange', throttledVisibilityChange);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (visibilityTimeout) clearTimeout(visibilityTimeout);
+      document.removeEventListener('visibilitychange', throttledVisibilityChange);
     };
-  }, [isAuthenticated, toast]);
+  }, [isAuthenticated]);
 
-  return null; // This component doesn't render anything
+  return null;
 };

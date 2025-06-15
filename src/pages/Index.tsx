@@ -10,7 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import type { User } from "@/types/user";
 
-// Export the User type for backward compatibility
 export type { User };
 
 const Index = () => {
@@ -28,11 +27,11 @@ const Index = () => {
     // Only redirect if not loading and definitely not authenticated
     if (!loading && !isAuthenticated && !authError) {
       console.log('Index: Redirecting to auth page');
-      navigate("/auth");
+      navigate("/auth", { replace: true }); // Use replace to prevent back button issues
     }
   }, [loading, isAuthenticated, navigate, authError, profile]);
 
-  // Show loading while checking auth state
+  // Early return for loading state
   if (loading) {
     console.log('Index: Showing loading state');
     return (
@@ -42,7 +41,7 @@ const Index = () => {
     );
   }
 
-  // Show auth error state
+  // Early return for auth error state
   if (authError) {
     console.log('Index: Showing auth error state');
     return (
@@ -64,7 +63,7 @@ const Index = () => {
     );
   }
 
-  // If not authenticated, show redirecting message (will redirect via useEffect)
+  // Early return for unauthenticated state
   if (!isAuthenticated || !profile) {
     console.log('Index: Not authenticated, showing redirect message');
     return (

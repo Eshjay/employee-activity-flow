@@ -28,34 +28,39 @@ export const useAuth = () => {
     setProfile,
     setAuthError,
     setLoading,
+    updateAuthState,
     handleAuthStateChange,
     handleInitialSession
   } = useAuthState();
 
   const mounted = useRef(true);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization
+    if (initialized.current) return;
+    initialized.current = true;
+    
     mounted.current = true;
     console.log('useAuth: Initializing auth state');
 
-    // Create the actual handler functions by calling the factory functions with mounted ref
+    // Create the handler functions
     const authStateChangeHandler = handleAuthStateChange(mounted);
     const initialSessionHandler = handleInitialSession(mounted);
 
-    // Set up the auth state listener
+    // Set up the auth state listener first
     console.log('useAuth: Setting up auth state listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateChangeHandler);
 
-    // Check for existing session
+    // Then check for existing session
     console.log('useAuth: Checking for existing session');
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('useAuth: Initial session found:', !!session);
       await initialSessionHandler(session);
     }).catch(error => {
       console.error('useAuth: Error getting initial session:', error);
-      // Ensure loading is set to false even if initial session check fails
       if (mounted.current) {
-        setLoading(false);
+        updateAuthState(null, null, false, 'Failed to load session');
       }
     });
 
@@ -64,7 +69,7 @@ export const useAuth = () => {
       mounted.current = false;
       subscription.unsubscribe();
     };
-  }, [handleAuthStateChange, handleInitialSession]);
+  }, []); // Empty dependency array to run only once
 
   const signOut = async () => {
     try {
@@ -74,11 +79,7 @@ export const useAuth = () => {
       cleanupAuthState();
       
       // Clear local state immediately
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      setAuthError(null);
-      setLoading(false);
+      updateAuthState(null, null, false, null);
       
       // Attempt Supabase sign out (don't block on errors)
       try {
