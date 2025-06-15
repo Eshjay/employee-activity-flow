@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AuthUser } from "../useAuth";
 
@@ -11,8 +10,11 @@ const parseRole = (input: any): "employee" | "ceo" | "developer" => {
 };
 
 // Cache for profile data to reduce database calls
-const profileCache = new Map<string, { profile: AuthUser; timestamp: number }>();
+const profileCache = new Map<string, { profile: AuthUser; timestamp: number; cacheKey: string }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Helper function to build a cache key from user properties (id + role)
+const buildCacheKey = (profile: { id: string; role: string }) => `${profile.id}:${profile.role}`;
 
 export const useProfileManagement = () => {
   const createMissingProfile = async (
@@ -51,8 +53,8 @@ export const useProfileManagement = () => {
         department: data.department,
       } as AuthUser;
 
-      // Cache the newly created profile
-      profileCache.set(userId, { profile, timestamp: Date.now() });
+      // Cache the newly created profile with new cacheKey
+      profileCache.set(userId, { profile, timestamp: Date.now(), cacheKey: buildCacheKey(profile) });
       console.log('Successfully created and cached profile:', data);
       
       return profile;
@@ -62,17 +64,32 @@ export const useProfileManagement = () => {
     }
   };
 
-  const fetchProfile = async (userId: string, email: string): Promise<AuthUser | null> => {
+  /**
+   * Fetches a user's profile.
+   * - Always bypasses cache if forceFresh is true, or if role has changed, or if cache expired.
+   */
+  const fetchProfile = async (
+    userId: string, 
+    email: string, 
+    options: { forceFresh?: boolean; expectedRole?: string } = {}
+  ): Promise<AuthUser | null> => {
     try {
-      // Check cache first
-      const cached = profileCache.get(userId);
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      const { forceFresh = false, expectedRole } = options;
+
+      let cached = profileCache.get(userId);
+      const isCacheValid = cached &&
+        Date.now() - cached.timestamp < CACHE_DURATION &&
+        (!expectedRole || cached.profile.role === expectedRole);
+
+      // If not forceFresh, and cache is valid and role hasn't changed, use cache
+      if (!forceFresh && isCacheValid) {
         console.log('Using cached profile for user:', userId);
-        return cached.profile;
+        return cached!.profile;
       }
 
-      console.log('Fetching profile for user:', userId);
-      
+      // Always force refetch if forceFresh=true or expectedRole and roles don't match
+      console.log('Fetching fresh profile for user:', userId);
+
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
@@ -107,8 +124,8 @@ export const useProfileManagement = () => {
         department: profileData.department,
       } as AuthUser;
 
-      // Cache the fetched profile
-      profileCache.set(userId, { profile, timestamp: Date.now() });
+      // Always update cache now with correct cacheKey based on fetched profile
+      profileCache.set(userId, { profile, timestamp: Date.now(), cacheKey: buildCacheKey(profile) });
       
       return profile;
     } catch (error) {
@@ -124,7 +141,7 @@ export const useProfileManagement = () => {
       };
       
       // Cache fallback profile briefly
-      profileCache.set(userId, { profile: fallbackProfile, timestamp: Date.now() });
+      profileCache.set(userId, { profile: fallbackProfile, timestamp: Date.now(), cacheKey: buildCacheKey(fallbackProfile) });
       console.log('Returning and caching fallback profile due to error');
       
       return fallbackProfile;
@@ -152,8 +169,16 @@ export const useProfileManagement = () => {
     }, 100);
   };
 
+  /**
+   * Helper to manually bust a user's profile cache (for example, after an admin role change)
+   */
+  const bustProfileCache = (userId: string) => {
+    profileCache.delete(userId);
+  };
+
   return {
     fetchProfile,
-    updateLastLogin
+    updateLastLogin,
+    bustProfileCache,
   };
 };
