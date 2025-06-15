@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -280,7 +279,7 @@ export const useAuth = () => {
       setSession(null);
       setProfile(null);
       setAuthError(null);
-      window.location.href = "/auth";
+      window.location.href = "/login";
     } catch (error) {
       console.error("Error signing out:", error);
     }
