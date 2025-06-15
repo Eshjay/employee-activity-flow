@@ -75,9 +75,9 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <DashboardHeader user={user} onLogout={onLogout} />
       
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-4 sm:mb-8">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
             Executive Dashboard
           </h1>
@@ -87,7 +87,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 mb-4 sm:mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-3 sm:p-6">
@@ -106,17 +106,17 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         </div>
 
         {/* Tab Navigation */}
-        <div className={`${isMobile ? 'flex flex-col gap-2' : 'flex gap-4'} mb-4 sm:mb-6`}>
+        <div className={`${isMobile ? "flex flex-col gap-2" : "flex gap-4"} mb-4 sm:mb-6`}>
           {tabs.map((tab) => (
             <Button
               key={tab.key}
               variant={activeTab === tab.key ? "default" : "outline"}
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={`${isMobile ? 'justify-start' : 'flex-1'} h-10 sm:h-12 text-sm sm:text-base`}
+              className={`${isMobile ? "justify-start" : "flex-1"} h-10 sm:h-12 text-sm sm:text-base`}
               size={isMobile ? "sm" : "default"}
             >
               <tab.icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              {isMobile ? tab.label.replace(" ", "\n") : tab.label}
+              {tab.label}
             </Button>
           ))}
         </div>

@@ -90,12 +90,13 @@ export const ReportGenerator = ({ onReportGenerated }: ReportGeneratorProps) => 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Button 
             className="h-12 flex items-center gap-2" 
             variant="outline"
             onClick={() => handleGenerateReport("Daily Report")}
             disabled={isGenerating}
+            size="sm"
           >
             <FileText className="w-4 h-4" />
             {isGenerating ? "Generating..." : "Daily Report"}
@@ -105,6 +106,7 @@ export const ReportGenerator = ({ onReportGenerated }: ReportGeneratorProps) => 
             variant="outline"
             onClick={() => handleGenerateReport("Weekly Summary")}
             disabled={isGenerating}
+            size="sm"
           >
             <Calendar className="w-4 h-4" />
             {isGenerating ? "Generating..." : "Weekly Summary"}
@@ -114,6 +116,7 @@ export const ReportGenerator = ({ onReportGenerated }: ReportGeneratorProps) => 
             variant="outline"
             onClick={handleSendReminders}
             disabled={isSendingEmails}
+            size="sm"
           >
             <Mail className="w-4 h-4" />
             {isSendingEmails ? "Sending..." : "Send Reminders"}
@@ -121,7 +124,7 @@ export const ReportGenerator = ({ onReportGenerated }: ReportGeneratorProps) => 
         </div>
         
         {isGenerating && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-700">
               <strong>Note:</strong> Reports now use real employee data from the database instead of mock data.
             </p>

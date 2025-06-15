@@ -38,9 +38,9 @@ export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) 
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <DashboardHeader user={user} onLogout={onLogout} />
       
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-4 sm:mb-8">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
             Developer Dashboard
           </h1>
@@ -50,7 +50,7 @@ export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) 
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 mb-4 sm:mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-3 sm:p-6">
@@ -69,7 +69,7 @@ export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) 
         </div>
 
         {/* Tab Navigation */}
-        <div className={`${isMobile ? 'flex flex-col gap-2' : 'flex gap-4'} mb-4 sm:mb-6`}>
+        <div className={`${isMobile ? "flex flex-col gap-2" : "flex gap-4"} mb-4 sm:mb-6`}>
           {tabs.map((tab) => (
             <Button
               key={tab.key}

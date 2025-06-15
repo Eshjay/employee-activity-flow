@@ -31,8 +31,8 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
 
   return (
     <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+        <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-0">
           {/* Logo and Brand */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -60,7 +60,7 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
           )}
 
           {/* Desktop User Info and Actions */}
-          <div className={`${isMobile ? 'hidden' : 'flex'} items-center gap-3 sm:gap-4`}>
+          <div className={`${isMobile ? "hidden" : "flex"} items-center gap-2 sm:gap-4`}>
             <div className="flex items-center gap-2 sm:gap-3">
               <Avatar className="h-7 w-7 sm:h-9 sm:w-9">
                 <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold text-xs sm:text-sm">
@@ -89,7 +89,7 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
 
         {/* Mobile Menu */}
         {isMobile && isMenuOpen && (
-          <div className="mt-3 pt-3 border-t border-slate-200 sm:hidden">
+          <div className="mt-2 pt-2 border-t border-slate-200 sm:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
@@ -118,3 +118,4 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
     </header>
   );
 };
+

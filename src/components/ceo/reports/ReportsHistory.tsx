@@ -25,7 +25,7 @@ export const ReportsHistory = ({ reports, isDeveloper, onDownload, onDelete }: R
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {reports.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No reports generated yet. Create your first report above.

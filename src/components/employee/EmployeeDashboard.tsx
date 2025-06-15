@@ -57,12 +57,12 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <DashboardHeader user={user} onLogout={onLogout} />
       
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* Welcome Section */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-1 sm:mb-2">
                 Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}!
               </h1>
               <p className="text-slate-600 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
@@ -75,7 +75,8 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
             <Button
               variant="outline"
               onClick={() => setIsMessagingOpen(true)}
-              className="relative flex items-center gap-2"
+              className="relative flex items-center gap-2 mt-2 sm:mt-0"
+              size={isMobile ? "sm" : "default"}
             >
               <Mail className="w-4 h-4" />
               <span className="hidden sm:inline">Messages</span>
@@ -89,9 +90,9 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
         </div>
 
         {/* Status Card */}
-        <Card className="mb-6 sm:mb-8 border-0 shadow-lg">
+        <Card className="mb-4 sm:mb-8 border-0 shadow-lg">
           <CardContent className="p-4 sm:p-6">
-            <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3 sm:gap-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
                 {hasSubmittedToday ? (
                   <>
@@ -116,7 +117,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
         </Card>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4 sm:mb-6">
           <Button
             variant={activeTab === "log" ? "default" : "outline"}
             onClick={() => setActiveTab("log")}
