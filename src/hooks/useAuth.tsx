@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { clearExpiredSession } from '@/utils/sessionUtils';
 import { cleanupAuthState } from './auth/useAuthCleanup';
 import { useAuthState } from './auth/useAuthState';
 import { useSessionValidation } from './auth/useSessionValidation';
@@ -29,6 +28,7 @@ export const useAuth = () => {
     setSession,
     setProfile,
     setAuthError,
+    setLoading,
     handleAuthStateChange,
     handleInitialSession
   } = useAuthState();
@@ -40,7 +40,7 @@ export const useAuth = () => {
     await signOut();
   };
 
-  // Use session validation hook
+  // Use session validation hook with improved logic
   useSessionValidation(session, handleSessionExpiry);
 
   useEffect(() => {
@@ -66,22 +66,35 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      if (user?.id) {
-        await clearExpiredSession(user.id);
-      }
+      console.log('Starting sign out process...');
+      
+      // Clear auth state first
       cleanupAuthState();
-      try {
-        await supabase.auth.signOut({ scope: "global" });
-      } catch (e) {
-        console.error('Error during sign out:', e);
-      }
+      
+      // Clear local state immediately
       setUser(null);
       setSession(null);
       setProfile(null);
       setAuthError(null);
-      window.location.href = "/";
+      setLoading(false);
+      
+      // Attempt Supabase sign out (don't block on errors)
+      try {
+        await supabase.auth.signOut({ scope: "global" });
+        console.log('Supabase sign out successful');
+      } catch (e) {
+        console.warn('Supabase sign out error (continuing anyway):', e);
+      }
+      
+      // Redirect to auth page with a slight delay to ensure state is cleared
+      setTimeout(() => {
+        window.location.href = "/auth";
+      }, 100);
+      
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Error during sign out:", error);
+      // Even if there's an error, redirect to auth page
+      window.location.href = "/auth";
     }
   };
 

@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, LogIn, Info, AlertCircle } from "lucide-react";
 import { cleanupAuthState } from "@/hooks/useAuth";
-import { checkSessionExpiration, clearExpiredSession } from "@/utils/sessionUtils";
 
 export const SignInForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,16 +22,21 @@ export const SignInForm = () => {
     setError(null);
 
     try {
-      // Clean up existing tokens and log out everywhere before signing in
+      console.log('Starting sign in process for:', signInEmail);
+
+      // Clean up existing state first
       cleanupAuthState();
+      
+      // Attempt global sign out to clear any existing sessions
       try {
         await supabase.auth.signOut({ scope: "global" });
+        console.log('Cleared existing sessions');
       } catch (e) {
-        // Continue even if this fails
-        console.log('Sign out during cleanup failed, continuing...');
+        console.log('No existing session to clear, continuing...');
       }
 
-      console.log('Attempting to sign in with email:', signInEmail);
+      // Wait a moment for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: signInEmail,
@@ -43,27 +47,15 @@ export const SignInForm = () => {
         throw authError;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         console.log('Sign in successful for user:', data.user.id);
         
-        // Check if this is a returning user with an expired session
-        const wasExpired = await checkSessionExpiration(data.user.id);
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
         
-        if (wasExpired) {
-          // Clear the expired session data
-          await clearExpiredSession(data.user.id);
-          toast({
-            title: "Session Renewed",
-            description: "Your previous session had expired. You've been signed in with a new 7-day session.",
-          });
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "You have been signed in successfully.",
-          });
-        }
-        
-        // Force a page refresh to ensure clean state
+        // Wait for auth state to propagate, then redirect
         setTimeout(() => {
           window.location.href = "/";
         }, 1000);
@@ -151,7 +143,7 @@ export const SignInForm = () => {
           <span className="text-sm font-medium text-blue-800">Session Security</span>
         </div>
         <p className="text-xs text-blue-700">
-          For security, your session will automatically expire after 7 days. You'll be prompted to sign in again when this happens.
+          Your session will remain active and secure. You'll only need to sign in again if you explicitly log out or after extended periods of inactivity.
         </p>
       </div>
       <Button

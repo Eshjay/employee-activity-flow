@@ -51,6 +51,7 @@ export const useAuthState = () => {
     setUser,
     setSession,
     setProfile,
+    setLoading,
     setAuthError,
     handleAuthStateChange: createAuthStateChangeHandler,
     handleInitialSession: createInitialSessionHandler

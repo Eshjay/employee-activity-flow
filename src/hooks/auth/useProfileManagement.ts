@@ -102,6 +102,8 @@ export const useProfileManagement = () => {
       });
       if (error) {
         console.error('Error updating last login:', error);
+      } else {
+        console.log('Successfully updated last login for user:', userId);
       }
     } catch (error) {
       console.error('Error calling update_last_login function:', error);
