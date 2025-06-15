@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,13 +7,15 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, LogIn, Info } from "lucide-react";
 import { updateLastLogin } from "@/utils/authUtils";
+import { cleanupAuthState } from "@/hooks/useAuth";
+
+// Removed useNavigate import (redirect now handled globally)
 
 export const SignInForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -22,22 +23,28 @@ export const SignInForm = () => {
     setIsLoading(true);
 
     try {
+      // Clean up existing tokens and log out everywhere before signing in
+      cleanupAuthState();
+      try {
+        await supabase.auth.signOut({ scope: "global" });
+      } catch {}
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: signInEmail,
         password: signInPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       if (data.user) {
-        // Update last login timestamp
-        await updateLastLogin(data.user.id);
-        
+        // updateLastLogin will be called later AFTER proper session established (in useAuth hook)
         toast({
           title: "Welcome back!",
           description: "You have been signed in successfully.",
         });
-        navigate("/");
+        // No direct navigation here: rely on Auth.tsx effect
       }
     } catch (error: any) {
       toast({
@@ -89,8 +96,6 @@ export const SignInForm = () => {
           </Button>
         </div>
       </div>
-      
-      {/* Information about account access */}
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-center gap-2 mb-1">
           <Info className="w-4 h-4 text-blue-600" />
@@ -100,7 +105,6 @@ export const SignInForm = () => {
           Existing employees can sign in with their provided credentials. New employee accounts are created by administrators.
         </p>
       </div>
-      
       <Button
         type="submit"
         className="w-full"

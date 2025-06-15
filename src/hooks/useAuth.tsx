@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,22 @@ export const useAuth = () => {
   const [profile, setProfile] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // This utility can be imported/reused for global auth state clean-up
+  const cleanupAuthState = () => {
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
+          localStorage.removeItem(key);
+        }
+      });
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (e) {}
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data: profileData, error } = await supabase
@@ -23,12 +40,10 @@ export const useAuth = () => {
         .select('*')
         .eq('id', userId)
         .single();
-      
       if (error) {
         console.error('Error fetching profile:', error);
         return null;
       }
-
       if (profileData) {
         return {
           id: profileData.id,
@@ -50,60 +65,29 @@ export const useAuth = () => {
       const { error } = await supabase.rpc('update_last_login', {
         user_uuid: userId
       });
-      
       if (error) {
         console.error('Error updating last login:', error);
-      } else {
-        console.log('Last login updated successfully for user:', userId);
       }
     } catch (error) {
       console.error('Error calling update_last_login function:', error);
     }
   };
 
-  const cleanupAuthState = () => {
-    try {
-      // Remove standard tokens & all supabase keys in localStorage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-          localStorage.removeItem(key);
-        }
-      });
-      // Remove from sessionStorage as well
-      Object.keys(sessionStorage).forEach((key) => {
-        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
-          sessionStorage.removeItem(key);
-        }
-      });
-    } catch (e) {
-      // Ignore errors
-    }
-  };
-
   useEffect(() => {
-    // Set up auth state listener
+    // Set up the auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (event === 'SIGNED_IN') {
-          // Clean up "limbo" state if any, per best practice
-          cleanupAuthState();
-
+        // Defer profile fetching and last login update to avoid deadlocks
+        if (event === 'SIGNED_IN' && session?.user) {
           setTimeout(async () => {
-            const profileData = await fetchProfile(session?.user?.id || "");
+            const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
             setLoading(false);
+            await updateLastLogin(session.user.id);
           }, 0);
-
-          // Update last login but outside of setTimeout for ordering
-          if (session?.user) {
-            setTimeout(async () => {
-              await updateLastLogin(session.user.id);
-            }, 0);
-          }
         } else if (!session?.user) {
           setProfile(null);
           setLoading(false);
@@ -111,19 +95,17 @@ export const useAuth = () => {
       }
     );
 
-    // Check for existing session once at mount
+    // Only after listener is set, check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Clean up state on reload too, in case of "limbo"
-        cleanupAuthState();
-
         setTimeout(async () => {
           const profileData = await fetchProfile(session.user.id);
           setProfile(profileData);
           setLoading(false);
+          await updateLastLogin(session.user.id);
         }, 0);
       } else {
         setLoading(false);
@@ -137,13 +119,11 @@ export const useAuth = () => {
     try {
       cleanupAuthState();
       try {
-        // Attempt global sign out (ignore failures)
         await supabase.auth.signOut({ scope: "global" });
-      } catch (err) {}
+      } catch {}
       setUser(null);
       setSession(null);
       setProfile(null);
-      // Force reload to leave no stale state
       window.location.href = "/auth";
     } catch (error) {
       console.error("Error signing out:", error);
@@ -159,3 +139,6 @@ export const useAuth = () => {
     isAuthenticated: !!session
   };
 };
+
+// Export cleanupAuthState to use in other places like SignInForm
+export { cleanupAuthState };
