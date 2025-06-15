@@ -25,15 +25,12 @@ export const useAuthEventHandlers = () => {
     setters.setAuthError(null);
 
     if (event === 'SIGNED_IN' && session?.user) {
-      // Defer profile fetching to avoid deadlocks
-      setTimeout(async () => {
-        if (!mounted.current) return;
-        await processSession(session, mounted, {
-          setProfile: setters.setProfile,
-          setLoading: setters.setLoading,
-          setAuthError: setters.setAuthError
-        });
-      }, 100);
+      // Process session immediately without delay
+      await processSession(session, mounted, {
+        setProfile: setters.setProfile,
+        setLoading: setters.setLoading,
+        setAuthError: setters.setAuthError
+      });
     } else if (!session?.user) {
       if (mounted.current) {
         setters.setProfile(null);
@@ -60,14 +57,12 @@ export const useAuthEventHandlers = () => {
     setters.setUser(session?.user ?? null);
 
     if (session?.user) {
-      setTimeout(async () => {
-        if (!mounted.current) return;
-        await processSession(session, mounted, {
-          setProfile: setters.setProfile,
-          setLoading: setters.setLoading,
-          setAuthError: setters.setAuthError
-        });
-      }, 100);
+      // Process session immediately without delay
+      await processSession(session, mounted, {
+        setProfile: setters.setProfile,
+        setLoading: setters.setLoading,
+        setAuthError: setters.setAuthError
+      });
     } else {
       if (mounted.current) {
         setters.setLoading(false);

@@ -1,51 +1,35 @@
 
 import { useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useSessionValidation = (
   session: Session | null, 
   onSessionExpiry: () => Promise<void>
 ) => {
-  // Set up periodic session validation (every 30 minutes instead of 5 to reduce load)
+  // Simplified session validation - only check if session actually expires
   useEffect(() => {
     if (!session?.user) return;
 
-    const intervalId = setInterval(async () => {
-      try {
-        // Check if the current session is still valid with Supabase
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error || !currentSession) {
-          console.log('Session validation failed - session expired');
-          await onSessionExpiry();
-          return;
-        }
+    // Only set up a timeout if the session has an expiration time
+    if (!session.expires_at) return;
 
-        // Check if the session is close to expiring (within 5 minutes)
-        const expiresAt = currentSession.expires_at;
-        if (expiresAt) {
-          const expirationTime = expiresAt * 1000; // Convert to milliseconds
-          const currentTime = Date.now();
-          const timeUntilExpiry = expirationTime - currentTime;
-          
-          // If session expires in less than 5 minutes, try to refresh
-          if (timeUntilExpiry < 5 * 60 * 1000) {
-            console.log('Session expiring soon, attempting refresh...');
-            const { error: refreshError } = await supabase.auth.refreshSession();
-            
-            if (refreshError) {
-              console.log('Session refresh failed:', refreshError);
-              await onSessionExpiry();
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error during session validation:', error);
-        // Don't automatically log out on validation errors - could be network issues
-      }
-    }, 30 * 60 * 1000); // Check every 30 minutes
+    const expirationTime = session.expires_at * 1000; // Convert to milliseconds
+    const currentTime = Date.now();
+    const timeUntilExpiry = expirationTime - currentTime;
+    
+    // Only set up expiry check if session will actually expire soon
+    if (timeUntilExpiry <= 0) {
+      console.log('Session already expired');
+      onSessionExpiry();
+      return;
+    }
 
-    return () => clearInterval(intervalId);
-  }, [session?.user?.id, onSessionExpiry]);
+    // Set timeout for when session will actually expire (with 1 minute buffer)
+    const timeoutId = setTimeout(() => {
+      console.log('Session expired - logging out');
+      onSessionExpiry();
+    }, Math.max(timeUntilExpiry - 60000, 0)); // 1 minute before expiry
+
+    return () => clearTimeout(timeoutId);
+  }, [session?.expires_at, onSessionExpiry]);
 };

@@ -4,7 +4,6 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState } from './auth/useAuthCleanup';
 import { useAuthState } from './auth/useAuthState';
-import { useSessionValidation } from './auth/useSessionValidation';
 
 export interface AuthUser {
   id: string;
@@ -34,14 +33,6 @@ export const useAuth = () => {
   } = useAuthState();
 
   const mounted = useRef(true);
-
-  const handleSessionExpiry = async () => {
-    console.log('Session expired - logging out user');
-    await signOut();
-  };
-
-  // Use session validation hook with improved logic
-  useSessionValidation(session, handleSessionExpiry);
 
   useEffect(() => {
     mounted.current = true;

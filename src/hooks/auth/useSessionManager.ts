@@ -26,12 +26,16 @@ export const useSessionManager = () => {
       console.log('Processing session for user:', session.user.id);
       
       const profileData = await fetchProfile(session.user.id, session.user.email || '');
-      if (mounted.current) {
-        setters.setProfile(profileData);
-        setters.setLoading(false);
-        if (profileData) {
-          await updateLastLogin(session.user.id);
-        }
+      if (!mounted.current) return; // Check if still mounted after async operation
+      
+      setters.setProfile(profileData);
+      setters.setLoading(false);
+      
+      if (profileData) {
+        // Update last login in background without waiting
+        updateLastLogin(session.user.id).catch(error => {
+          console.warn('Failed to update last login:', error);
+        });
       }
     } catch (error) {
       console.error('Error processing session:', error);
