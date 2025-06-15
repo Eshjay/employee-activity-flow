@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,15 @@ export const cleanupAuthState = () => {
   } catch (e) {}
 };
 
+// Helper to assert the role is correct
+const parseRole = (input: any): "employee" | "ceo" | "developer" => {
+  if (input === "employee" || input === "ceo" || input === "developer") {
+    return input;
+  }
+  // fallback if roles ever come as number (legacy or seed data), just default to "employee"
+  return "employee";
+};
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -44,13 +54,14 @@ export const useAuth = () => {
         return null;
       }
       if (profileData) {
+        // Make sure role is a string literal (never a number)
         return {
           id: profileData.id,
           name: profileData.name,
           email: profileData.email,
-          role: "employee" | "ceo" | "developer",
-          department: profileData.department
-        };
+          role: parseRole(profileData.role),
+          department: profileData.department,
+        } as AuthUser;
       }
       return null;
     } catch (error) {
@@ -140,3 +151,4 @@ export const useAuth = () => {
 };
 
 // No need to re-export cleanupAuthState; it's already exported at definition.
+
