@@ -9,7 +9,7 @@ import { MessagingSystemData } from "./MessagingSystemData";
 import { useActivities, type Activity } from "@/hooks/useActivities";
 
 interface Employee {
-  id: string; // Changed from number to string to match UUID
+  id: string;
   name: string;
   email: string;
   department: string;
@@ -51,13 +51,13 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "submitted":
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Submitted</Badge>;
+        return <Badge className="bg-green-50 text-green-700 border-green-200 font-medium">Submitted</Badge>;
       case "pending":
-        return <Badge className="bg-amber-100 text-amber-700 border-amber-200">Pending</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200 font-medium">Pending</Badge>;
       case "missing":
-        return <Badge className="bg-red-100 text-red-700 border-red-200">Missing</Badge>;
+        return <Badge className="bg-red-50 text-red-700 border-red-200 font-medium">Missing</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline" className="font-medium">Unknown</Badge>;
     }
   };
 
@@ -67,107 +67,162 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
       const end = new Date(`2000-01-01T${activity.time_ended}`);
       const diffMs = end.getTime() - start.getTime();
       const diffHours = diffMs / (1000 * 60 * 60);
-      return Math.max(0, Math.round(diffHours * 2) / 2); // Round to nearest 0.5
+      return Math.max(0, Math.round(diffHours * 2) / 2);
     }
-    return 8; // Default 8 hours if no time specified
+    return 8;
   };
 
-  // Responsive modal tweaks!
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => onClose()}>
-        <DialogContent 
-          className="max-w-2xl sm:max-w-2xl p-4 sm:p-8 rounded-xl transition-all duration-200
-            flex flex-col gap-3
-            [&>*]:max-w-full
-            "
-          style={{ maxWidth: "100vw", width: '96vw', minWidth: "0" }}
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 min-w-0">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
-                  {employee.name.split(" ").map(n => n[0]).join("")}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-semibold truncate">{employee.name}</h2>
-                <p className="text-xs sm:text-sm text-slate-600 truncate">{employee.department}</p>
-              </div>
-            </DialogTitle>
-            <DialogDescription>
-              Employee activity details and performance overview
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[800px] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <DialogHeader className="p-4 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50">
+              <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <Avatar className="h-12 w-12 sm:h-14 sm:w-14 shadow-soft">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-semibold text-lg">
+                    {employee.name.split(" ").map(n => n[0]).join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-responsive-xl font-bold text-slate-800 mb-1">{employee.name}</h2>
+                  <p className="text-responsive-base text-slate-600">{employee.department}</p>
+                </div>
+              </DialogTitle>
+              <DialogDescription className="text-responsive-sm text-slate-500 mt-2">
+                Employee activity details and performance overview
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-6">
-            {/* Info grid mobile-responsive */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-              <div className="flex items-center gap-2 text-xs sm:text-sm break-words">
-                <Mail className="w-4 h-4 text-slate-500" />
-                <span className="truncate">{employee.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <Building2 className="w-4 h-4 text-slate-500" />
-                <span className="truncate">{employee.department}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <Calendar className="w-4 h-4 text-slate-500" />
-                <span>
-                  Last activity: {employee.lastActivity ? new Date(employee.lastActivity).toLocaleDateString() : "—"}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm">
-                <TrendingUp className="w-4 h-4 text-slate-500" />
-                <span>{employee.activitiesThisWeek} activities this week</span>
-              </div>
-            </div>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+              {/* Info Grid - Mobile Optimized */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Mail className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</p>
+                    <p className="text-responsive-sm font-medium text-slate-800 truncate">{employee.email}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
+                  <div className="p-2 bg-emerald-50 rounded-lg">
+                    <Building2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Department</p>
+                    <p className="text-responsive-sm font-medium text-slate-800 truncate">{employee.department}</p>
+                  </div>
+                </div>
 
-            {/* Status */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-lg gap-2">
-              <span className="font-medium text-sm">Current Status:</span>
-              {getStatusBadge(employee.status)}
-            </div>
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
+                  <div className="p-2 bg-amber-50 rounded-lg">
+                    <Calendar className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Last Activity</p>
+                    <p className="text-responsive-sm font-medium text-slate-800">
+                      {employee.lastActivity ? new Date(employee.lastActivity).toLocaleDateString() : "—"}
+                    </p>
+                  </div>
+                </div>
 
-            {/* Recent Activities */}
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2 text-sm sm:text-base">
-                <Clock className="w-4 h-4" />
-                Recent Activities
-              </h3>
-              <div className="space-y-2">
-                {recentActivities.length > 0 ? (
-                  recentActivities.map((activity, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-2 sm:p-3 bg-slate-50 rounded-lg gap-1 sm:gap-3 text-xs sm:text-sm">
-                      <div className="min-w-0">
-                        <p className="font-medium text-xs sm:text-sm">{activity.title}</p>
-                        <p className="text-xs text-slate-600 truncate max-w-xs">{activity.description}</p>
-                        <p className="text-xs text-slate-600">
-                          {new Date(activity.date).toLocaleDateString()}
-                        </p>
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
+                  <div className="p-2 bg-purple-50 rounded-lg">
+                    <TrendingUp className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">This Week</p>
+                    <p className="text-responsive-sm font-medium text-slate-800">{employee.activitiesThisWeek} activities</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Section */}
+              <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-4 sm:p-5 rounded-xl border border-slate-100">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-responsive-base font-semibold text-slate-800 mb-1">Current Status</h3>
+                    <p className="text-responsive-sm text-slate-600">Employee submission status for today</p>
+                  </div>
+                  {getStatusBadge(employee.status)}
+                </div>
+              </div>
+
+              {/* Recent Activities */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-slate-100 rounded-lg">
+                    <Clock className="w-4 h-4 text-slate-600" />
+                  </div>
+                  <h3 className="text-responsive-lg font-semibold text-slate-800">Recent Activities</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {recentActivities.length > 0 ? (
+                    recentActivities.map((activity, index) => (
+                      <div key={index} className="bg-white p-4 rounded-xl border border-slate-100 shadow-subtle hover:shadow-soft transition-all duration-200">
+                        <div className="flex flex-col sm:flex-row justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-responsive-base font-semibold text-slate-800 mb-1">{activity.title}</h4>
+                            <p className="text-responsive-sm text-slate-600 mb-2 line-clamp-2">{activity.description}</p>
+                            <p className="text-xs text-slate-500 font-medium">
+                              {new Date(activity.date).toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <Badge variant="outline" className="bg-slate-50 font-medium">
+                              {calculateHours(activity)}h
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                      <Badge variant="outline">{calculateHours(activity)}h</Badge>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 px-4">
+                      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Clock className="w-6 h-6 text-slate-400" />
+                      </div>
+                      <p className="text-responsive-base text-slate-500 font-medium">No recent activities found</p>
+                      <p className="text-responsive-sm text-slate-400 mt-1">Activities will appear here once submitted</p>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-xs sm:text-sm text-slate-500 p-3 bg-slate-50 rounded-lg">No recent activities found</p>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Actions: adjust btns for stacking on mobile */}
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <Button variant="outline" className="flex-1">
-                View Full History
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setIsMessagingOpen(true)}
-              >
-                Send Message
-              </Button>
-              <Button className="flex-1" onClick={onClose}>Close</Button>
+            {/* Footer Actions */}
+            <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-25">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 touch-target btn-hover-lift text-responsive-sm font-medium"
+                >
+                  View Full History
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 touch-target btn-hover-lift text-responsive-sm font-medium"
+                  onClick={() => setIsMessagingOpen(true)}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Message
+                </Button>
+                <Button 
+                  className="flex-1 touch-target btn-hover-glow text-responsive-sm font-medium" 
+                  onClick={onClose}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

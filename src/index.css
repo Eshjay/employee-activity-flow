@@ -1,8 +1,9 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* Enhanced Design System - All colors, gradients, fonts, etc should be defined here. */
 
 @layer base {
   :root {
@@ -37,20 +38,30 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Enhanced spacing system */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Enhanced typography scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
   }
 
   .dark {
@@ -99,5 +110,133 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enhanced scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  /* Enhanced button hover effects */
+  .btn-hover-lift {
+    @apply transition-all duration-200 hover:shadow-medium hover:-translate-y-0.5;
+  }
+
+  .btn-hover-glow {
+    @apply transition-all duration-300 hover:shadow-glow;
+  }
+
+  /* Enhanced card styles */
+  .card-elevated {
+    @apply bg-white border border-slate-200/50 shadow-soft hover:shadow-medium transition-all duration-300;
+  }
+
+  .card-glass {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-soft;
+  }
+
+  /* Mobile-first responsive text */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+
+  /* Enhanced spacing utilities */
+  .spacing-responsive {
+    @apply space-y-2 sm:space-y-4 lg:space-y-6;
+  }
+
+  .padding-responsive {
+    @apply p-2 sm:p-4 lg:p-6;
+  }
+
+  .margin-responsive {
+    @apply m-2 sm:m-4 lg:m-6;
+  }
+
+  /* Mobile touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Enhanced focus states */
+  .focus-enhanced {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-fade-in-up {
+    animation: fade-in 0.3s ease-out, slide-up 0.3s ease-out;
+  }
+
+  /* Mobile-specific utilities */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
+  }
+
+  /* Enhanced shadows with better performance */
+  .shadow-subtle {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-soft {
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 16px -4px rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-medium {
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 8px 24px -4px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
   }
 }

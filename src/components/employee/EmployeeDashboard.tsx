@@ -7,7 +7,7 @@ import { ActivityForm } from "./ActivityForm";
 import { ActivityHistoryData } from "./ActivityHistoryData";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { MessagingSystemData } from "../shared/MessagingSystemData";
-import { CheckCircle, Clock, Calendar, Mail } from "lucide-react";
+import { CheckCircle, Clock, Calendar, Mail, TrendingUp } from "lucide-react";
 import { useActivities } from "@/hooks/useActivities";
 import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/hooks/useMessages";
@@ -23,7 +23,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
   const { profile } = useAuth();
   const { activities, fetchActivities } = useActivities();
   const { getUnreadCount } = useMessages(profile?.id);
-  const [activeTab, setActiveTab] = useState<"log" | "history" | "messages">("log");
+  const [activeTab, setActiveTab] = useState<"log" | "history">("log");
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false);
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -41,7 +41,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
 
   const handleActivitySubmitted = () => {
     setHasSubmittedToday(true);
-    fetchActivities(); // Refresh activities list
+    fetchActivities();
   };
 
   const unreadCount = getUnreadCount();
@@ -53,35 +53,44 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
     day: "numeric"
   });
 
+  // Calculate user stats
+  const userActivities = activities.filter(a => a.user_id === profile?.id);
+  const thisWeekActivities = userActivities.filter(a => {
+    const activityDate = new Date(a.date);
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    return activityDate >= weekStart;
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-25 via-blue-25 to-emerald-25">
       <DashboardHeader user={user} onLogout={onLogout} />
       
-      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        {/* Welcome Section */}
-        <div className="mb-4 sm:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-1 sm:mb-2">
-                Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}!
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        {/* Enhanced Welcome Section */}
+        <div className="mb-6 sm:mb-8 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-responsive-2xl font-bold text-slate-800 mb-2 text-balance">
+                Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}! 👋
               </h1>
-              <p className="text-slate-600 flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                {today}
-              </p>
+              <div className="flex items-center gap-2 text-responsive-base text-slate-600">
+                <Calendar className="w-4 h-4 text-blue-500" />
+                <span>{today}</span>
+              </div>
             </div>
             
-            {/* Messages Button */}
+            {/* Enhanced Messages Button */}
             <Button
               variant="outline"
               onClick={() => setIsMessagingOpen(true)}
-              className="relative flex items-center gap-2 mt-2 sm:mt-0"
+              className="relative btn-hover-lift shadow-soft border-slate-200 font-medium"
               size={isMobile ? "sm" : "default"}
             >
-              <Mail className="w-4 h-4" />
-              <span className="hidden sm:inline">Messages</span>
+              <Mail className="w-4 h-4 mr-2" />
+              <span className={isMobile ? "" : "mr-1"}>Messages</span>
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold animate-bounce-subtle">
                   {unreadCount}
                 </Badge>
               )}
@@ -89,62 +98,83 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
           </div>
         </div>
 
-        {/* Status Card */}
-        <Card className="mb-4 sm:mb-8 border-0 shadow-lg">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                {hasSubmittedToday ? (
-                  <>
-                    <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-green-700 text-sm sm:text-base">Today's Activity Logged</h3>
-                      <p className="text-xs sm:text-sm text-green-600">Great job! Your daily report has been submitted.</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-amber-700 text-sm sm:text-base">Daily Activity Pending</h3>
-                      <p className="text-xs sm:text-sm text-amber-600">Please log your activities for today.</p>
-                    </div>
-                  </>
-                )}
+        {/* Enhanced Status Card */}
+        <Card className="mb-6 sm:mb-8 border-0 shadow-medium hover:shadow-strong transition-all duration-300 animate-fade-in">
+          <CardContent className="padding-responsive">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
+              <div className="flex items-center gap-4 flex-1">
+                <div className={`p-3 sm:p-4 rounded-2xl shadow-soft ${hasSubmittedToday ? 'bg-green-50' : 'bg-amber-50'}`}>
+                  {hasSubmittedToday ? (
+                    <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
+                  ) : (
+                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className={`text-responsive-lg font-bold mb-1 ${hasSubmittedToday ? 'text-green-700' : 'text-amber-700'}`}>
+                    {hasSubmittedToday ? "Today's Activity Logged ✓" : "Daily Activity Pending"}
+                  </h3>
+                  <p className={`text-responsive-sm ${hasSubmittedToday ? 'text-green-600' : 'text-amber-600'}`}>
+                    {hasSubmittedToday 
+                      ? "Great job! Your daily report has been submitted successfully." 
+                      : "Please log your activities for today to stay on track."
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Activity Stats */}
+              <div className="flex gap-6 lg:gap-8">
+                <div className="text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-800">{userActivities.length}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium">Total Activities</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-800">{thisWeekActivities.length}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium">This Week</p>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tab Navigation */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4 sm:mb-6">
+        {/* Enhanced Tab Navigation */}
+        <div className="flex gap-3 mb-6 sm:mb-8">
           <Button
             variant={activeTab === "log" ? "default" : "outline"}
             onClick={() => setActiveTab("log")}
-            className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
+            className="flex-1 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
             size={isMobile ? "sm" : "default"}
           >
-            Log Activity
+            <TrendingUp className="w-4 h-4 mr-2" />
+            <span className="text-responsive-sm">Log Activity</span>
           </Button>
           <Button
             variant={activeTab === "history" ? "default" : "outline"}
             onClick={() => setActiveTab("history")}
-            className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
+            className="flex-1 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
             size={isMobile ? "sm" : "default"}
           >
-            View History
+            <Calendar className="w-4 h-4 mr-2" />
+            <span className="text-responsive-sm">View History</span>
           </Button>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === "log" ? (
-          <ActivityForm />
-        ) : (
-          <ActivityHistoryData />
-        )}
+        {/* Enhanced Tab Content */}
+        <div className="animate-fade-in">
+          {activeTab === "log" ? (
+            <div className="animate-slide-up">
+              <ActivityForm />
+            </div>
+          ) : (
+            <div className="animate-slide-up">
+              <ActivityHistoryData />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Messaging System */}
+      {/* Enhanced Messaging System */}
       {profile?.id && (
         <MessagingSystemData
           currentUserId={profile.id}
