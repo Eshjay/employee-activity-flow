@@ -18,14 +18,23 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('Index: Auth state changed', {
+      loading,
+      isAuthenticated,
+      hasProfile: !!profile,
+      authError
+    });
+
     // Only redirect if not loading and definitely not authenticated
     if (!loading && !isAuthenticated && !authError) {
+      console.log('Index: Redirecting to auth page');
       navigate("/auth");
     }
-  }, [loading, isAuthenticated, navigate, authError]);
+  }, [loading, isAuthenticated, navigate, authError, profile]);
 
   // Show loading while checking auth state
   if (loading) {
+    console.log('Index: Showing loading state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-lg">Loading...</div>
@@ -35,6 +44,7 @@ const Index = () => {
 
   // Show auth error state
   if (authError) {
+    console.log('Index: Showing auth error state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
         <Card className="w-full max-w-md">
@@ -56,12 +66,15 @@ const Index = () => {
 
   // If not authenticated, show redirecting message (will redirect via useEffect)
   if (!isAuthenticated || !profile) {
+    console.log('Index: Not authenticated, showing redirect message');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-lg">Redirecting to login...</div>
       </div>
     );
   }
+
+  console.log('Index: Rendering dashboard for user role:', profile.role);
 
   const user: User = {
     id: profile.id,

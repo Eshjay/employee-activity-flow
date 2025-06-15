@@ -17,21 +17,26 @@ export const useAuthEventHandlers = () => {
       setLoading: (loading: boolean) => void;
     }
   ) => {
-    if (!mounted.current) return;
+    if (!mounted.current) {
+      console.log('handleAuthStateChange: Component unmounted, skipping');
+      return;
+    }
 
-    console.log('Auth state change:', event, session?.user?.id);
+    console.log('Auth state change:', event, 'user ID:', session?.user?.id);
     setters.setSession(session);
     setters.setUser(session?.user ?? null);
     setters.setAuthError(null);
 
     if (event === 'SIGNED_IN' && session?.user) {
-      // Process session immediately without delay
+      console.log('Processing sign in event');
+      // Process session with improved error handling
       await processSession(session, mounted, {
         setProfile: setters.setProfile,
         setLoading: setters.setLoading,
         setAuthError: setters.setAuthError
       });
     } else if (!session?.user) {
+      console.log('No user in session, clearing profile and stopping loading');
       if (mounted.current) {
         setters.setProfile(null);
         setters.setLoading(false);
@@ -50,20 +55,25 @@ export const useAuthEventHandlers = () => {
       setAuthError: (error: string | null) => void;
     }
   ) => {
-    if (!mounted.current) return;
+    if (!mounted.current) {
+      console.log('handleInitialSession: Component unmounted, skipping');
+      return;
+    }
 
     console.log('Initial session check:', session?.user?.id);
     setters.setSession(session);
     setters.setUser(session?.user ?? null);
 
     if (session?.user) {
-      // Process session immediately without delay
+      console.log('Processing initial session');
+      // Process session with improved error handling
       await processSession(session, mounted, {
         setProfile: setters.setProfile,
         setLoading: setters.setLoading,
         setAuthError: setters.setAuthError
       });
     } else {
+      console.log('No initial session, stopping loading');
       if (mounted.current) {
         setters.setLoading(false);
       }

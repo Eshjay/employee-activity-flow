@@ -10,6 +10,8 @@ export const SessionExpiryNotification = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    console.log('SessionExpiryNotification: Component mounted for authenticated user');
+
     // Simplified session check on visibility change only
     const handleVisibilityChange = async () => {
       if (!document.hidden && isAuthenticated) {

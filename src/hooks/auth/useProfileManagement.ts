@@ -57,14 +57,33 @@ export const useProfileManagement = () => {
   const fetchProfile = async (userId: string, email: string): Promise<AuthUser | null> => {
     try {
       console.log('Fetching profile for user:', userId);
-      const { data: profileData, error } = await supabase
+      
+      // Add a timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+      );
+
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
+      const { data: profileData, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
       if (error) {
         console.error('Error fetching profile:', error);
+        // If it's a network error, return a fallback profile instead of null
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('timeout')) {
+          console.log('Network error detected, creating fallback profile');
+          return {
+            id: userId,
+            name: email.split('@')[0],
+            email: email,
+            role: 'employee' as const,
+            department: 'General',
+          };
+        }
         return null;
       }
 
@@ -72,14 +91,26 @@ export const useProfileManagement = () => {
         console.log('Profile not found, checking user metadata for role information');
         
         // Try to get the user's metadata to extract role information
-        const { data: { user } } = await supabase.auth.getUser();
-        const roleFromMetadata = user?.user_metadata?.role;
-        
-        console.log('User metadata role:', roleFromMetadata);
-        console.log('Creating new profile with role from metadata');
-        
-        const newProfile = await createMissingProfile(userId, email, roleFromMetadata);
-        return newProfile;
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          const roleFromMetadata = user?.user_metadata?.role;
+          
+          console.log('User metadata role:', roleFromMetadata);
+          console.log('Creating new profile with role from metadata');
+          
+          const newProfile = await createMissingProfile(userId, email, roleFromMetadata);
+          return newProfile;
+        } catch (metadataError) {
+          console.warn('Could not fetch user metadata, using fallback profile:', metadataError);
+          // Return a fallback profile if metadata fetch fails
+          return {
+            id: userId,
+            name: email.split('@')[0],
+            email: email,
+            role: 'employee' as const,
+            department: 'General',
+          };
+        }
       }
 
       return {
@@ -91,7 +122,15 @@ export const useProfileManagement = () => {
       } as AuthUser;
     } catch (error) {
       console.error('Error in fetchProfile:', error);
-      return null;
+      // Always return a fallback profile instead of null to prevent loading loops
+      console.log('Returning fallback profile due to error');
+      return {
+        id: userId,
+        name: email.split('@')[0],
+        email: email,
+        role: 'employee' as const,
+        department: 'General',
+      };
     }
   };
 

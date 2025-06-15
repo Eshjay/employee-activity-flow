@@ -36,20 +36,31 @@ export const useAuth = () => {
 
   useEffect(() => {
     mounted.current = true;
+    console.log('useAuth: Initializing auth state');
 
     // Create the actual handler functions by calling the factory functions with mounted ref
     const authStateChangeHandler = handleAuthStateChange(mounted);
     const initialSessionHandler = handleInitialSession(mounted);
 
     // Set up the auth state listener
+    console.log('useAuth: Setting up auth state listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateChangeHandler);
 
     // Check for existing session
+    console.log('useAuth: Checking for existing session');
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('useAuth: Initial session found:', !!session);
       await initialSessionHandler(session);
+    }).catch(error => {
+      console.error('useAuth: Error getting initial session:', error);
+      // Ensure loading is set to false even if initial session check fails
+      if (mounted.current) {
+        setLoading(false);
+      }
     });
 
     return () => {
+      console.log('useAuth: Cleanup');
       mounted.current = false;
       subscription.unsubscribe();
     };
@@ -89,13 +100,24 @@ export const useAuth = () => {
     }
   };
 
+  // More resilient authentication check
+  const isAuthenticated = !!session && !!profile;
+  
+  console.log('useAuth state:', {
+    hasSession: !!session,
+    hasProfile: !!profile,
+    isAuthenticated,
+    loading,
+    authError
+  });
+
   return {
     user,
     session,
     profile,
     loading,
     signOut,
-    isAuthenticated: !!session && !!profile,
+    isAuthenticated,
     authError
   };
 };
