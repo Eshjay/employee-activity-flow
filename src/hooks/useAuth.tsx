@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,6 +61,25 @@ export const useAuth = () => {
     }
   };
 
+  const cleanupAuthState = () => {
+    try {
+      // Remove standard tokens & all supabase keys in localStorage
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
+          localStorage.removeItem(key);
+        }
+      });
+      // Remove from sessionStorage as well
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("supabase.auth.") || key.includes("sb-")) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      // Ignore errors
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -69,34 +87,39 @@ export const useAuth = () => {
         console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Update last login when user signs in
-          if (event === 'SIGNED_IN') {
+
+        if (event === 'SIGNED_IN') {
+          // Clean up "limbo" state if any, per best practice
+          cleanupAuthState();
+
+          setTimeout(async () => {
+            const profileData = await fetchProfile(session?.user?.id || "");
+            setProfile(profileData);
+            setLoading(false);
+          }, 0);
+
+          // Update last login but outside of setTimeout for ordering
+          if (session?.user) {
             setTimeout(async () => {
               await updateLastLogin(session.user.id);
             }, 0);
           }
-
-          // Defer profile fetching to avoid potential deadlocks
-          setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            setLoading(false);
-          }, 0);
-        } else {
+        } else if (!session?.user) {
           setProfile(null);
           setLoading(false);
         }
       }
     );
 
-    // Check for existing session
+    // Check for existing session once at mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
+        // Clean up state on reload too, in case of "limbo"
+        cleanupAuthState();
+
         setTimeout(async () => {
           const profileData = await fetchProfile(session.user.id);
           setProfile(profileData);
@@ -112,12 +135,18 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      cleanupAuthState();
+      try {
+        // Attempt global sign out (ignore failures)
+        await supabase.auth.signOut({ scope: "global" });
+      } catch (err) {}
       setUser(null);
       setSession(null);
       setProfile(null);
+      // Force reload to leave no stale state
+      window.location.href = "/auth";
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
