@@ -1,1 +1,11 @@
+
 project_id = "ckfdybkkmmqqhersclrb"
+
+[functions.send-reset-email]
+verify_jwt = true
+
+[functions.send-daily-reminders]
+verify_jwt = true
+
+[functions.send-ceo-daily-report]
+verify_jwt = false
