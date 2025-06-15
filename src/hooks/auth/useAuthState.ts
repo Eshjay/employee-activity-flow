@@ -43,16 +43,16 @@ export const useAuthState = () => {
             if (!mounted.current) return;
             
             try {
-              const { fetchProfile, updateLastLogin } = await import('./useProfileManagement');
-              const profileMgmt = { fetchProfile: fetchProfile(), updateLastLogin: updateLastLogin() };
+              const { useProfileManagement } = await import('./useProfileManagement');
+              const { fetchProfile, updateLastLogin } = useProfileManagement();
               
-              const profileData = await profileMgmt.fetchProfile(session.user.id, session.user.email || '');
+              const profileData = await fetchProfile(session.user.id, session.user.email || '');
               
               if (mounted.current) {
                 updateAuthState(session, profileData, false, null);
                 
                 // Background task for last login update
-                profileMgmt.updateLastLogin(session.user.id).catch(console.warn);
+                updateLastLogin(session.user.id);
               }
             } catch (error) {
               console.error('Profile fetch error:', error);
@@ -88,16 +88,16 @@ export const useAuthState = () => {
       updateAuthState(session, null, true, null);
       
       try {
-        const { fetchProfile, updateLastLogin } = await import('./useProfileManagement');
-        const profileMgmt = { fetchProfile: fetchProfile(), updateLastLogin: updateLastLogin() };
+        const { useProfileManagement } = await import('./useProfileManagement');
+        const { fetchProfile, updateLastLogin } = useProfileManagement();
         
-        const profileData = await profileMgmt.fetchProfile(session.user.id, session.user.email || '');
+        const profileData = await fetchProfile(session.user.id, session.user.email || '');
         
         if (mounted.current) {
           updateAuthState(session, profileData, false, null);
           
           // Background task for last login update
-          profileMgmt.updateLastLogin(session.user.id).catch(console.warn);
+          updateLastLogin(session.user.id);
         }
       } catch (error) {
         console.error('Initial profile fetch error:', error);
