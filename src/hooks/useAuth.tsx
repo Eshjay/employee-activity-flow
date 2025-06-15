@@ -279,7 +279,7 @@ export const useAuth = () => {
       setSession(null);
       setProfile(null);
       setAuthError(null);
-      window.location.href = "/login";
+      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out:", error);
     }
