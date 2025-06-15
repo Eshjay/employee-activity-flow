@@ -10,11 +10,17 @@ interface UserListProps {
   onResetPassword: (user: Profile) => void;
 }
 
-export const UserList = ({ users, onEditUser, onDeleteUser, onResetPassword }: UserListProps) => {
+export const UserList = ({
+  users,
+  onEditUser,
+  onDeleteUser,
+  onResetPassword,
+}: UserListProps) => {
   return (
     <Card className="border-0 shadow-lg">
       <CardContent className="p-0">
-        <div className="space-y-0">
+        {/* Responsive: vertical space for mobile, tighter for desktop */}
+        <div className="flex flex-col divide-y divide-slate-200">
           {users.map((user) => (
             <UserCard
               key={user.id}
