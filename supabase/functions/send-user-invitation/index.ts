@@ -59,19 +59,23 @@ serve(async (req) => {
     // Create signup link
     const signupLink = `${req.headers.get('origin')}/auth?mode=signup&email=${encodeURIComponent(email)}&token=${invitationToken}`;
 
+    // Use a verified domain or the account owner's email for testing
+    const fromEmail = Deno.env.get('VERIFIED_SENDER_EMAIL') || 'onboarding@resend.dev';
+    const appName = 'Allure CV Signatures';
+
     // Send invitation email
     const emailResponse = await resend.emails.send({
-      from: 'Activity Tracker <onboarding@resend.dev>',
+      from: `${appName} <${fromEmail}>`,
       to: [email],
-      subject: 'You\'re Invited to Join Activity Tracker',
+      subject: `You're Invited to Join ${appName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">Activity Tracker</h1>
+          <h1 style="color: #333; text-align: center;">${appName}</h1>
           <h2 style="color: #2563eb;">You're Invited!</h2>
           
           <p>Hello ${name},</p>
           
-          <p>You've been invited to join Activity Tracker as a <strong>${role}</strong> in the <strong>${department}</strong> department.</p>
+          <p>You've been invited to join ${appName} as a <strong>${role}</strong> in the <strong>${department}</strong> department.</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${signupLink}" 
@@ -99,7 +103,11 @@ serve(async (req) => {
           
           <p style="font-size: 14px; color: #6b7280;">
             Best regards,<br>
-            The Activity Tracker Team
+            The ${appName} Team
+          </p>
+          
+          <p style="font-size: 12px; color: #9ca3af;">
+            This is an automated message. Please do not reply to this email.
           </p>
         </div>
       `,
@@ -107,6 +115,21 @@ serve(async (req) => {
 
     if (emailResponse.error) {
       console.error('Resend error:', emailResponse.error);
+      
+      // Check if it's a domain verification error
+      if (emailResponse.error.message && emailResponse.error.message.includes('domain')) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Email domain not verified. Please verify your domain in Resend dashboard.',
+            details: emailResponse.error.message
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+      
       return new Response(
         JSON.stringify({ error: `Failed to send invitation email: ${emailResponse.error.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

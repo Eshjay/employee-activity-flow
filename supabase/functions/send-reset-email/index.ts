@@ -43,18 +43,22 @@ serve(async (req) => {
       )
     }
 
+    // Use a verified domain or the account owner's email for testing
+    const fromEmail = Deno.env.get('VERIFIED_SENDER_EMAIL') || 'onboarding@resend.dev';
+    const appName = 'Allure CV Signatures';
+
     const emailResponse = await resend.emails.send({
-      from: 'Activity Tracker <onboarding@resend.dev>',
+      from: `${appName} <${fromEmail}>`,
       to: [email],
-      subject: 'Password Reset Request - Activity Tracker',
+      subject: `Password Reset Request - ${appName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">Activity Tracker</h1>
+          <h1 style="color: #333; text-align: center;">${appName}</h1>
           <h2 style="color: #2563eb;">Password Reset Request</h2>
           
           <p>Hello ${userName || 'there'},</p>
           
-          <p>We received a request to reset your password for your Activity Tracker account. If you made this request, please click the button below to reset your password:</p>
+          <p>We received a request to reset your password for your ${appName} account. If you made this request, please click the button below to reset your password:</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetLink}" 
@@ -82,7 +86,7 @@ serve(async (req) => {
           
           <p style="font-size: 14px; color: #6b7280;">
             Best regards,<br>
-            The Activity Tracker Team
+            The ${appName} Team
           </p>
           
           <p style="font-size: 12px; color: #9ca3af;">
@@ -96,6 +100,21 @@ serve(async (req) => {
 
     if (emailResponse.error) {
       console.error('Resend error:', emailResponse.error)
+      
+      // Check if it's a domain verification error
+      if (emailResponse.error.message && emailResponse.error.message.includes('domain')) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Email domain not verified. Please verify your domain in Resend dashboard.',
+            details: emailResponse.error.message
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+      
       return new Response(
         JSON.stringify({ error: `Failed to send email: ${emailResponse.error.message}` }),
         { 
