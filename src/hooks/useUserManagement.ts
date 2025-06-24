@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,13 @@ export const useUserManagement = () => {
         return;
       }
 
-      setUsers(data || []);
+      // Type cast the data to match Profile interface
+      const typedUsers: Profile[] = (data || []).map(user => ({
+        ...user,
+        role: user.role as "employee" | "ceo" | "developer"
+      }));
+
+      setUsers(typedUsers);
     } catch (error) {
       console.error("Error in fetchUsers:", error);
       toast({
