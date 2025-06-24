@@ -53,6 +53,91 @@ export type Database = {
           },
         ]
       }
+      email_change_requests: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          new_email: string
+          old_email: string
+          user_id: string
+          verification_token: string
+          verified_at: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          new_email: string
+          old_email: string
+          user_id: string
+          verification_token: string
+          verified_at?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          new_email?: string
+          old_email?: string
+          user_id?: string
+          verification_token?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_change_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invitation_token: string
+          invited_by: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invitation_token: string
+          invited_by: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          invited_by?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -130,6 +215,8 @@ export type Database = {
           created_at: string | null
           department: string
           email: string
+          email_verification_sent_at: string | null
+          email_verified: boolean | null
           id: string
           last_login: string | null
           name: string
@@ -143,6 +230,8 @@ export type Database = {
           created_at?: string | null
           department: string
           email: string
+          email_verification_sent_at?: string | null
+          email_verified?: boolean | null
           id: string
           last_login?: string | null
           name: string
@@ -156,6 +245,8 @@ export type Database = {
           created_at?: string | null
           department?: string
           email?: string
+          email_verification_sent_at?: string | null
+          email_verified?: boolean | null
           id?: string
           last_login?: string | null
           name?: string
@@ -243,6 +334,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_email_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_expired_reset_tokens: {
         Args: Record<PropertyKey, never>
         Returns: undefined
