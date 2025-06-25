@@ -11,6 +11,7 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const resendApiKey = Deno.env.get('RESEND_API_KEY');
+const verifiedSenderEmail = Deno.env.get('VERIFIED_SENDER_EMAIL');
 
 const resend = new Resend(resendApiKey);
 
@@ -34,7 +35,15 @@ serve(async (req) => {
     if (!resendApiKey) {
       console.error('RESEND_API_KEY not configured');
       return new Response(
-        JSON.stringify({ error: 'Email service not configured' }),
+        JSON.stringify({ error: 'Email service not configured - RESEND_API_KEY missing' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!verifiedSenderEmail) {
+      console.error('VERIFIED_SENDER_EMAIL not configured');
+      return new Response(
+        JSON.stringify({ error: 'Email service not configured - VERIFIED_SENDER_EMAIL missing. Please set this to a verified email address in your Resend account.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -105,8 +114,6 @@ serve(async (req) => {
     // Create signup link
     const signupLink = `${req.headers.get('origin')}/auth?mode=signup&email=${encodeURIComponent(email)}&token=${invitationToken}`;
 
-    // Use a verified domain or the account owner's email for testing
-    const fromEmail = Deno.env.get('VERIFIED_SENDER_EMAIL') || 'onboarding@resend.dev';
     const appName = 'Allure CV Signatures';
 
     const emailHtml = `
@@ -176,9 +183,10 @@ serve(async (req) => {
     `;
 
     console.log('Sending invitation email to:', email);
+    console.log('Using sender email:', verifiedSenderEmail);
 
     const emailResponse = await resend.emails.send({
-      from: `${appName} <${fromEmail}>`,
+      from: `${appName} <${verifiedSenderEmail}>`,
       to: [email],
       subject: `You're Invited to Join ${appName}`,
       html: emailHtml,
@@ -199,22 +207,11 @@ serve(async (req) => {
         .delete()
         .eq('id', invitation.id);
       
-      // Check if it's a domain verification error
-      if (emailResponse.error.message && emailResponse.error.message.includes('domain')) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Email domain not verified. Please contact the system administrator.',
-            details: emailResponse.error.message
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        )
-      }
-      
       return new Response(
-        JSON.stringify({ error: `Failed to send invitation email: ${emailResponse.error.message}` }),
+        JSON.stringify({ 
+          error: `Failed to send invitation email: ${emailResponse.error.message}. Please ensure your VERIFIED_SENDER_EMAIL is properly configured in Resend.`,
+          details: emailResponse.error.message
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
