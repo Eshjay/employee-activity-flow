@@ -28,6 +28,7 @@ export const SignupWithInvitation = ({
   const [verifying, setVerifying] = useState(true);
   const [invitationValid, setInvitationValid] = useState(false);
   const [invitationError, setInvitationError] = useState("");
+  const [invitationData, setInvitationData] = useState<any>(null);
   const { toast } = useToast();
   const { verifyInvitation } = useEmailManagement();
 
@@ -35,13 +36,18 @@ export const SignupWithInvitation = ({
     const checkInvitation = async () => {
       setVerifying(true);
       try {
+        console.log('Checking invitation for:', { email, token: token?.substring(0, 8) + '...' });
+        
         const result = await verifyInvitation(token, email);
         
         if (result.valid) {
           setInvitationValid(true);
+          setInvitationData(result.invitation);
+          console.log('Invitation verified successfully');
         } else {
           setInvitationValid(false);
           setInvitationError(result.error || 'Invalid invitation');
+          console.log('Invitation verification failed:', result.error);
         }
       } catch (error) {
         console.error('Error verifying invitation:', error);
@@ -81,6 +87,23 @@ export const SignupWithInvitation = ({
     setLoading(true);
 
     try {
+      console.log('Starting signup process for:', email);
+      
+      // First, mark the invitation as used
+      const { error: markUsedError } = await supabase
+        .from('email_invitations')
+        .update({ 
+          used_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('invitation_token', token)
+        .eq('email', email);
+
+      if (markUsedError) {
+        console.error('Error marking invitation as used:', markUsedError);
+        // Continue with signup even if this fails
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
@@ -89,24 +112,43 @@ export const SignupWithInvitation = ({
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            invitation_token: token
+            invitation_token: token,
+            invitation_used: true
           }
         }
       });
 
       if (error) {
         console.error('Signup error:', error);
+        
+        // If user already exists, try to sign them in instead
+        if (error.message?.includes('already registered')) {
+          toast({
+            title: "Account exists",
+            description: "An account with this email already exists. Try signing in instead.",
+            variant: "destructive",
+          });
+          onBackToLogin();
+          return;
+        }
+        
         toast({
           title: "Error",
           description: error.message || "Failed to create account",
           variant: "destructive",
         });
       } else if (data.user) {
+        console.log('Signup successful:', data.user.id);
+        
         toast({
           title: "Account created successfully",
-          description: "Welcome to Activity Tracker! You can now start using the system.",
+          description: "Welcome! You can now start using the system.",
         });
-        onSuccess();
+        
+        // Short delay to ensure auth state is updated
+        setTimeout(() => {
+          onSuccess();
+        }, 1000);
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -179,8 +221,9 @@ export const SignupWithInvitation = ({
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Enter your password (min 6 characters)"
               required
+              minLength={6}
             />
           </div>
           
@@ -193,6 +236,7 @@ export const SignupWithInvitation = ({
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               required
+              minLength={6}
             />
           </div>
           
@@ -205,6 +249,7 @@ export const SignupWithInvitation = ({
             variant="outline" 
             onClick={onBackToLogin}
             className="w-full"
+            disabled={loading}
           >
             Back to Login
           </Button>

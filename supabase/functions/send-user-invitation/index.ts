@@ -22,19 +22,65 @@ serve(async (req) => {
   try {
     const { email, name, role, department, invitedBy } = await req.json();
 
+    console.log('Processing invitation request:', { email, name, role, department, invitedBy });
+
     if (!email || !name || !role || !department || !invitedBy) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing required fields: email, name, role, department, invitedBy' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'Email service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check if user already exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, email, status')
+      .eq('email', email)
+      .single();
+
+    if (existingProfile) {
+      return new Response(
+        JSON.stringify({ 
+          error: `A user with email ${email} already exists in the system.` 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if there's already a pending invitation for this email
+    const { data: existingInvitation } = await supabase
+      .from('email_invitations')
+      .select('id, expires_at, used_at')
+      .eq('email', email)
+      .is('used_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (existingInvitation) {
+      return new Response(
+        JSON.stringify({ 
+          error: `There is already a pending invitation for ${email}. Please wait for it to expire or be used.` 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Generate invitation token
     const invitationToken = crypto.randomUUID();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+
+    console.log('Generated invitation token for:', email);
 
     // Store invitation in database
     const { data: invitation, error: invitationError } = await supabase
@@ -51,7 +97,7 @@ serve(async (req) => {
     if (invitationError) {
       console.error('Error creating invitation:', invitationError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create invitation' }),
+        JSON.stringify({ error: 'Failed to create invitation record' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -63,64 +109,101 @@ serve(async (req) => {
     const fromEmail = Deno.env.get('VERIFIED_SENDER_EMAIL') || 'onboarding@resend.dev';
     const appName = 'Allure CV Signatures';
 
-    // Send invitation email
-    const emailResponse = await resend.emails.send({
-      from: `${appName} <${fromEmail}>`,
-      to: [email],
-      subject: `You're Invited to Join ${appName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">${appName}</h1>
-          <h2 style="color: #2563eb;">You're Invited!</h2>
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #1f2937; font-size: 28px; margin: 0;">${appName}</h1>
+          <div style="height: 3px; background: linear-gradient(90deg, #10b981, #059669); margin: 10px auto; width: 60px;"></div>
+        </div>
+        
+        <div style="background-color: #f0fdf4; border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+          <h2 style="color: #059669; margin: 0 0 20px 0; font-size: 24px;">🎉 You're Invited!</h2>
           
-          <p>Hello ${name},</p>
+          <p style="color: #374151; font-size: 16px; line-height: 24px; margin: 0 0 20px 0;">
+            Hello ${name},
+          </p>
           
-          <p>You've been invited to join ${appName} as a <strong>${role}</strong> in the <strong>${department}</strong> department.</p>
+          <p style="color: #374151; font-size: 16px; line-height: 24px; margin: 0 0 20px 0;">
+            You've been invited to join <strong>${appName}</strong> as a <strong>${role}</strong> in the <strong>${department}</strong> department.
+          </p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${signupLink}" 
-               style="background-color: #2563eb; 
+               style="background: linear-gradient(135deg, #10b981, #059669);
                       color: white; 
-                      padding: 12px 24px; 
+                      padding: 14px 28px; 
                       text-decoration: none; 
-                      border-radius: 6px; 
+                      border-radius: 8px; 
                       display: inline-block;
-                      font-weight: bold;">
+                      font-weight: 600;
+                      font-size: 16px;
+                      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
               Complete Your Registration
             </a>
           </div>
           
-          <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; background-color: #f3f4f6; padding: 10px; border-radius: 4px;">
+          <p style="color: #6b7280; font-size: 14px; line-height: 20px; margin: 20px 0 0 0;">
+            If the button doesn't work, you can copy and paste this link into your browser:
+          </p>
+          <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin: 10px 0; word-break: break-all; font-family: monospace; font-size: 13px; color: #374151;">
             ${signupLink}
-          </p>
-          
-          <p><strong>Important:</strong> This invitation will expire in 7 days.</p>
-          
-          <p>If you have any questions, please contact your administrator.</p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-          
-          <p style="font-size: 14px; color: #6b7280;">
-            Best regards,<br>
-            The ${appName} Team
-          </p>
-          
-          <p style="font-size: 12px; color: #9ca3af;">
-            This is an automated message. Please do not reply to this email.
+          </div>
+        </div>
+        
+        <div style="background-color: #fef3cd; border-radius: 8px; padding: 16px; margin: 20px 0;">
+          <p style="color: #92400e; font-size: 14px; margin: 0; font-weight: 600;">
+            ⏰ This invitation will expire in 7 days.
           </p>
         </div>
-      `,
+        
+        <p style="color: #6b7280; font-size: 14px; line-height: 20px;">
+          If you have any questions about your account or need help getting started, please contact your administrator.
+        </p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+        
+        <div style="text-align: center;">
+          <p style="color: #374151; font-size: 14px; margin: 0 0 8px 0;">
+            Welcome to the team!<br>
+            <strong>The ${appName} Team</strong>
+          </p>
+          
+          <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+            This is an automated invitation. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
+    `;
+
+    console.log('Sending invitation email to:', email);
+
+    const emailResponse = await resend.emails.send({
+      from: `${appName} <${fromEmail}>`,
+      to: [email],
+      subject: `You're Invited to Join ${appName}`,
+      html: emailHtml,
+    });
+
+    console.log('Invitation email result:', {
+      success: !emailResponse.error,
+      emailId: emailResponse.data?.id,
+      error: emailResponse.error?.message
     });
 
     if (emailResponse.error) {
       console.error('Resend error:', emailResponse.error);
       
+      // Clean up the invitation record if email failed
+      await supabase
+        .from('email_invitations')
+        .delete()
+        .eq('id', invitation.id);
+      
       // Check if it's a domain verification error
       if (emailResponse.error.message && emailResponse.error.message.includes('domain')) {
         return new Response(
           JSON.stringify({ 
-            error: 'Email domain not verified. Please verify your domain in Resend dashboard.',
+            error: 'Email domain not verified. Please contact the system administrator.',
             details: emailResponse.error.message
           }),
           { 

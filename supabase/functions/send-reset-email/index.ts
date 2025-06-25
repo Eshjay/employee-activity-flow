@@ -19,8 +19,8 @@ serve(async (req) => {
     const { email, resetLink, userName } = await req.json()
 
     console.log('Attempting to send reset email to:', email)
-    console.log('Reset link:', resetLink)
-    console.log('RESEND_API_KEY present:', !!Deno.env.get('RESEND_API_KEY'))
+    console.log('Reset link provided:', !!resetLink)
+    console.log('RESEND_API_KEY configured:', !!Deno.env.get('RESEND_API_KEY'))
 
     if (!email || !resetLink) {
       return new Response(
@@ -47,56 +47,86 @@ serve(async (req) => {
     const fromEmail = Deno.env.get('VERIFIED_SENDER_EMAIL') || 'onboarding@resend.dev';
     const appName = 'Allure CV Signatures';
 
-    const emailResponse = await resend.emails.send({
-      from: `${appName} <${fromEmail}>`,
-      to: [email],
-      subject: `Password Reset Request - ${appName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">${appName}</h1>
-          <h2 style="color: #2563eb;">Password Reset Request</h2>
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #1f2937; font-size: 28px; margin: 0;">${appName}</h1>
+          <div style="height: 3px; background: linear-gradient(90deg, #3b82f6, #1d4ed8); margin: 10px auto; width: 60px;"></div>
+        </div>
+        
+        <div style="background-color: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+          <h2 style="color: #1e40af; margin: 0 0 20px 0; font-size: 24px;">Password Reset Request</h2>
           
-          <p>Hello ${userName || 'there'},</p>
+          <p style="color: #374151; font-size: 16px; line-height: 24px; margin: 0 0 20px 0;">
+            Hello ${userName || 'there'},
+          </p>
           
-          <p>We received a request to reset your password for your ${appName} account. If you made this request, please click the button below to reset your password:</p>
+          <p style="color: #374151; font-size: 16px; line-height: 24px; margin: 0 0 30px 0;">
+            We received a request to reset your password for your ${appName} account. If you made this request, please click the button below to reset your password:
+          </p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetLink}" 
-               style="background-color: #2563eb; 
+               style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);
                       color: white; 
-                      padding: 12px 24px; 
+                      padding: 14px 28px; 
                       text-decoration: none; 
-                      border-radius: 6px; 
+                      border-radius: 8px; 
                       display: inline-block;
-                      font-weight: bold;">
+                      font-weight: 600;
+                      font-size: 16px;
+                      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
               Reset Your Password
             </a>
           </div>
           
-          <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; background-color: #f3f4f6; padding: 10px; border-radius: 4px;">
+          <p style="color: #6b7280; font-size: 14px; line-height: 20px; margin: 20px 0 0 0;">
+            If the button doesn't work, you can copy and paste this link into your browser:
+          </p>
+          <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin: 10px 0; word-break: break-all; font-family: monospace; font-size: 13px; color: #374151;">
             ${resetLink}
+          </div>
+        </div>
+        
+        <div style="background-color: #fef3cd; border-radius: 8px; padding: 16px; margin: 20px 0;">
+          <p style="color: #92400e; font-size: 14px; margin: 0; font-weight: 600;">
+            ⚠️ Important: This link will expire in 1 hour for security reasons.
           </p>
-          
-          <p><strong>Important:</strong> This link will expire in 1 hour for security reasons.</p>
-          
-          <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-          
-          <p style="font-size: 14px; color: #6b7280;">
+        </div>
+        
+        <p style="color: #6b7280; font-size: 14px; line-height: 20px;">
+          If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+        </p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+        
+        <div style="text-align: center;">
+          <p style="color: #374151; font-size: 14px; margin: 0 0 8px 0;">
             Best regards,<br>
-            The ${appName} Team
+            <strong>The ${appName} Team</strong>
           </p>
           
-          <p style="font-size: 12px; color: #9ca3af;">
+          <p style="color: #9ca3af; font-size: 12px; margin: 0;">
             This is an automated message. Please do not reply to this email.
           </p>
         </div>
-      `,
+      </div>
+    `;
+
+    console.log('Sending email with from address:', fromEmail);
+
+    const emailResponse = await resend.emails.send({
+      from: `${appName} <${fromEmail}>`,
+      to: [email],
+      subject: `Password Reset Request - ${appName}`,
+      html: emailHtml,
     })
 
-    console.log('Password reset email result:', emailResponse)
+    console.log('Password reset email result:', {
+      success: !emailResponse.error,
+      emailId: emailResponse.data?.id,
+      error: emailResponse.error?.message
+    });
 
     if (emailResponse.error) {
       console.error('Resend error:', emailResponse.error)
@@ -105,7 +135,7 @@ serve(async (req) => {
       if (emailResponse.error.message && emailResponse.error.message.includes('domain')) {
         return new Response(
           JSON.stringify({ 
-            error: 'Email domain not verified. Please verify your domain in Resend dashboard.',
+            error: 'Email domain not verified. Please contact the system administrator.',
             details: emailResponse.error.message
           }),
           { 

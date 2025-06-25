@@ -15,6 +15,8 @@ serve(async (req) => {
   try {
     const { email } = await req.json()
 
+    console.log('Password reset request for:', email);
+
     if (!email) {
       return new Response(
         JSON.stringify({ error: 'Email is required' }),
@@ -30,17 +32,31 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Clean up expired tokens first
+    await supabaseClient
+      .from('password_reset_tokens')
+      .delete()
+      .lt('expires_at', new Date().toISOString());
+
     // Check if user exists
-    const { data: userProfile } = await supabaseClient
+    const { data: userProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('id, email, name')
       .eq('email', email)
       .single()
 
+    console.log('User profile lookup:', { 
+      found: !!userProfile, 
+      error: profileError?.message 
+    });
+
     if (!userProfile) {
       // Don't reveal if user exists or not for security
       return new Response(
-        JSON.stringify({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' }),
+        JSON.stringify({ 
+          success: true, 
+          message: 'If an account with that email exists, a password reset link has been sent.' 
+        }),
         { 
           status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -53,14 +69,27 @@ serve(async (req) => {
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 1) // 1 hour expiry
 
+    console.log('Generated reset token for user:', userProfile.id);
+
     // Store reset token
-    await supabaseClient
+    const { error: tokenError } = await supabaseClient
       .from('password_reset_tokens')
       .insert({
         user_id: userProfile.id,
         token,
         expires_at: expiresAt.toISOString()
       })
+
+    if (tokenError) {
+      console.error('Error storing reset token:', tokenError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate reset token. Please try again.' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
 
     // Create reset link
     const resetLink = `${req.headers.get('origin')}/reset-password?token=${token}`
@@ -75,9 +104,14 @@ serve(async (req) => {
         }
       })
 
+      console.log('Email sending result:', { 
+        success: !emailResponse.error,
+        error: emailResponse.error?.message 
+      });
+
       if (emailResponse.error) {
         console.error('Error sending email:', emailResponse.error)
-        // Still return success to not reveal if user exists
+        // Continue with success response to not reveal if user exists
       } else {
         console.log('Password reset email sent successfully')
       }
@@ -91,7 +125,7 @@ serve(async (req) => {
         success: true, 
         message: 'If an account with that email exists, a password reset link has been sent.',
         // In development, we'll still return the link for testing
-        resetLink: resetLink
+        ...(Deno.env.get('ENVIRONMENT') === 'development' && { resetLink })
       }),
       { 
         status: 200, 
@@ -102,7 +136,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error sending password reset:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error. Please try again later.' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

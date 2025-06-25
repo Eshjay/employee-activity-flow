@@ -15,6 +15,8 @@ serve(async (req) => {
   try {
     const { token, newPassword } = await req.json()
 
+    console.log('Password reset attempt with token:', token?.substring(0, 8) + '...');
+
     if (!token || !newPassword) {
       return new Response(
         JSON.stringify({ error: 'Token and new password are required' }),
@@ -40,14 +42,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Clean up expired tokens first
+    await supabaseClient
+      .from('password_reset_tokens')
+      .delete()
+      .lt('expires_at', new Date().toISOString());
+
     // Verify reset token
-    const { data: resetToken } = await supabaseClient
+    const { data: resetToken, error: tokenError } = await supabaseClient
       .from('password_reset_tokens')
       .select('user_id, expires_at, used_at')
       .eq('token', token)
       .single()
 
-    if (!resetToken) {
+    console.log('Token verification result:', { 
+      found: !!resetToken, 
+      error: tokenError?.message,
+      expired: resetToken ? new Date(resetToken.expires_at) < new Date() : null,
+      used: !!resetToken?.used_at
+    });
+
+    if (tokenError || !resetToken) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired reset token' }),
         { 
@@ -69,7 +84,7 @@ serve(async (req) => {
 
     if (new Date(resetToken.expires_at) < new Date()) {
       return new Response(
-        JSON.stringify({ error: 'Reset token has expired' }),
+        JSON.stringify({ error: 'Reset token has expired. Please request a new password reset.' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -86,7 +101,7 @@ serve(async (req) => {
     if (passwordError) {
       console.error('Error updating password:', passwordError)
       return new Response(
-        JSON.stringify({ error: 'Failed to update password' }),
+        JSON.stringify({ error: 'Failed to update password. Please try again.' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -100,8 +115,13 @@ serve(async (req) => {
       .update({ used_at: new Date().toISOString() })
       .eq('token', token)
 
+    console.log('Password reset successful for user:', resetToken.user_id);
+
     return new Response(
-      JSON.stringify({ success: true, message: 'Password has been reset successfully' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Password has been reset successfully. You can now sign in with your new password.' 
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -111,7 +131,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error resetting password:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error. Please try again.' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
