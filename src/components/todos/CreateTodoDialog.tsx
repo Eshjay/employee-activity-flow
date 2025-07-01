@@ -6,20 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTodos } from "@/hooks/useTodos";
+import type { Todo } from "@/hooks/useTodos";
 
 interface CreateTodoDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (todoData: Partial<Todo>) => Promise<any>;
 }
 
-export const CreateTodoDialog = ({ isOpen, onClose }: CreateTodoDialogProps) => {
-  const { createTodo } = useTodos();
+export const CreateTodoDialog = ({ isOpen, onClose, onSubmit }: CreateTodoDialogProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    due_date: '',
-    priority: 'medium' as const
+    priority: 'medium' as const,
+    due_date: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -28,14 +28,15 @@ export const CreateTodoDialog = ({ isOpen, onClose }: CreateTodoDialogProps) => 
     setLoading(true);
     
     try {
-      await createTodo(formData);
+      await onSubmit(formData);
+      
+      // Reset form
       setFormData({
         title: '',
         description: '',
-        due_date: '',
-        priority: 'medium'
+        priority: 'medium',
+        due_date: ''
       });
-      onClose();
     } finally {
       setLoading(false);
     }

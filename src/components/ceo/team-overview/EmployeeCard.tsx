@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CheckCircle, Clock, AlertCircle, Eye, Mail } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, Eye, Mail, Plus } from "lucide-react";
 import type { EmployeeData, EmployeeStats } from "./types";
 
 interface EmployeeCardProps {
@@ -10,9 +10,10 @@ interface EmployeeCardProps {
   stats: EmployeeStats;
   onViewEmployee: (employee: EmployeeData) => void;
   onSendMessage: (employee: EmployeeData) => void;
+  onAddTask: (employee: EmployeeData) => void;
 }
 
-export const EmployeeCard = ({ employee, stats, onViewEmployee, onSendMessage }: EmployeeCardProps) => {
+export const EmployeeCard = ({ employee, stats, onViewEmployee, onSendMessage, onAddTask }: EmployeeCardProps) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "submitted":
@@ -96,6 +97,15 @@ export const EmployeeCard = ({ employee, stats, onViewEmployee, onSendMessage }:
             <Mail className="w-4 h-4 mr-2" />
             Message
           </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 touch-target btn-hover-lift font-medium text-blue-600 hover:text-blue-700"
+            onClick={() => onAddTask(employee)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Task
+          </Button>
         </div>
       </div>
 
@@ -147,6 +157,15 @@ export const EmployeeCard = ({ employee, stats, onViewEmployee, onSendMessage }:
             >
               <Mail className="w-4 h-4 mr-1" />
               Message
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="btn-hover-lift font-medium text-blue-600 hover:text-blue-700"
+              onClick={() => onAddTask(employee)}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Task
             </Button>
           </div>
         </div>

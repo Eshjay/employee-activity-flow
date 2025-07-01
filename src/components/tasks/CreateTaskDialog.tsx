@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,10 @@ interface CreateTaskDialogProps {
   isOpen: boolean;
   onClose: () => void;
   profiles: Profile[];
+  preselectedEmployee?: Profile;
 }
 
-export const CreateTaskDialog = ({ isOpen, onClose, profiles }: CreateTaskDialogProps) => {
+export const CreateTaskDialog = ({ isOpen, onClose, profiles, preselectedEmployee }: CreateTaskDialogProps) => {
   const { createTask } = useTasks();
   const { profile } = useAuth();
   const [formData, setFormData] = useState({
@@ -27,6 +28,16 @@ export const CreateTaskDialog = ({ isOpen, onClose, profiles }: CreateTaskDialog
     priority: 'medium' as const
   });
   const [loading, setLoading] = useState(false);
+
+  // Set preselected employee when dialog opens
+  useEffect(() => {
+    if (preselectedEmployee && isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        assigned_to: preselectedEmployee.id
+      }));
+    }
+  }, [preselectedEmployee, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +54,7 @@ export const CreateTaskDialog = ({ isOpen, onClose, profiles }: CreateTaskDialog
       setFormData({
         title: '',
         description: '',
-        assigned_to: '',
+        assigned_to: preselectedEmployee?.id || '',
         due_date: '',
         priority: 'medium'
       });
@@ -61,7 +72,10 @@ export const CreateTaskDialog = ({ isOpen, onClose, profiles }: CreateTaskDialog
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
-            Assign a task to a team member
+            {preselectedEmployee 
+              ? `Assign a task to ${preselectedEmployee.name}`
+              : "Assign a task to a team member"
+            }
           </DialogDescription>
         </DialogHeader>
         

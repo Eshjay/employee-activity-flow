@@ -1,104 +1,174 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmployeeDetailModal } from "../../shared/EmployeeDetailModal";
-import { MessagingSystemData } from "../../shared/MessagingSystemData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Users, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { EmployeeCard } from "./EmployeeCard";
-import { getEmployeeStatus, getWeeklyActivityCount, getTodayActivityCount, getLastActivityDate } from "./utils";
+import { EmployeeDetailModal } from "../../shared/EmployeeDetailModal";
+import { MessageCompose } from "../../shared/MessageCompose";
+import { CreateTaskDialog } from "../../tasks/CreateTaskDialog";
+import { useProfiles } from "@/hooks/useProfiles";
+import { calculateEmployeeStats } from "./utils";
 import type { EmployeeData } from "./types";
-import type { Activity } from "@/hooks/useActivities";
 
 interface TeamOverviewContainerProps {
   employees: EmployeeData[];
-  activities: Activity[];
+  activities: any[];
   currentUserId?: string;
 }
 
-export const TeamOverviewContainer = ({ employees, activities, currentUserId }: TeamOverviewContainerProps) => {
-  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMessagingOpen, setIsMessagingOpen] = useState(false);
-  const [messagingRecipient, setMessagingRecipient] = useState<{id: string, name: string} | null>(null);
+export const TeamOverviewContainer = ({ 
+  employees, 
+  activities, 
+  currentUserId 
+}: TeamOverviewContainerProps) => {
+  const { profiles } = useProfiles();
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeData | null>(null);
+  const [messageRecipient, setMessageRecipient] = useState<EmployeeData | null>(null);
+  const [taskAssignee, setTaskAssignee] = useState<EmployeeData | null>(null);
+
+  // Calculate overall stats
+  const today = new Date().toISOString().split('T')[0];
+  const todaySubmissions = activities.filter(activity => activity.date === today);
+  const submittedEmployeeIds = new Set(todaySubmissions.map(a => a.user_id));
+  
+  const activeEmployees = employees.filter(emp => submittedEmployeeIds.has(emp.id));
+  const pendingEmployees = employees.filter(emp => !submittedEmployeeIds.has(emp.id));
+
+  const stats = [
+    {
+      title: "Total Employees",
+      value: employees.length,
+      icon: Users,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50"
+    },
+    {
+      title: "Submitted Today",
+      value: activeEmployees.length,
+      icon: CheckCircle2,
+      color: "text-green-600",
+      bgColor: "bg-green-50"
+    },
+    {
+      title: "Pending Today",
+      value: pendingEmployees.length,
+      icon: TrendingUp,
+      color: "text-amber-600",
+      bgColor: "bg-amber-50"
+    },
+    {
+      title: "Weekly Total",
+      value: activities.length,
+      icon: AlertTriangle,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50"
+    }
+  ];
 
   const handleViewEmployee = (employee: EmployeeData) => {
-    const employeeActivities = activities.filter(a => a.user_id === employee.id);
-    const lastActivityDate = getLastActivityDate(employee.id, activities);
-    
-    setSelectedEmployee({
-      id: employee.id,
-      name: employee.name,
-      email: employee.email,
-      department: employee.department,
-      lastActivity: lastActivityDate,
-      status: getEmployeeStatus(employee.id, activities),
-      activitiesThisWeek: getWeeklyActivityCount(employee.id, activities),
-      activities: employeeActivities
-    });
-    setIsModalOpen(true);
+    setSelectedEmployee(employee);
   };
 
   const handleSendMessage = (employee: EmployeeData) => {
-    setMessagingRecipient({ id: employee.id, name: employee.name });
-    setIsMessagingOpen(true);
+    setMessageRecipient(employee);
   };
 
-  if (employees.length === 0) {
-    return (
-      <div className="text-center p-8">
-        <div className="text-lg font-semibold text-gray-600 mb-2">No Employees Found</div>
-        <p className="text-gray-500">No employees are currently registered in the system.</p>
-      </div>
-    );
-  }
+  const handleAddTask = (employee: EmployeeData) => {
+    setTaskAssignee(employee);
+  };
 
   return (
     <div className="space-y-6">
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">Team Activity Status</CardTitle>
-          <CardDescription>
-            Current status of daily activity submissions from all team members - Today: {new Date().toLocaleDateString()}
-          </CardDescription>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => (
+          <Card key={index} className="border-0 shadow-medium">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    {stat.title}
+                  </p>
+                  <p className="text-xl font-bold text-slate-800">
+                    {stat.value}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Team Overview */}
+      <Card className="border-0 shadow-medium">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-semibold text-slate-800">
+              Team Overview
+            </CardTitle>
+            <Badge variant="outline" className="font-medium">
+              {employees.length} Members
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {employees.map((employee) => {
-              const status = getEmployeeStatus(employee.id, activities);
-              const weeklyCount = getWeeklyActivityCount(employee.id, activities);
-              const todayCount = getTodayActivityCount(employee.id, activities);
-              
-              return (
-                <EmployeeCard
-                  key={employee.id}
-                  employee={employee}
-                  stats={{
-                    todayCount,
-                    weeklyCount,
-                    status
-                  }}
-                  onViewEmployee={handleViewEmployee}
-                  onSendMessage={handleSendMessage}
-                />
-              );
-            })}
-          </div>
+          {employees.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <p className="text-slate-500">No employees found</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {employees.map((employee) => {
+                const stats = calculateEmployeeStats(employee.id, activities);
+                return (
+                  <EmployeeCard
+                    key={employee.id}
+                    employee={employee}
+                    stats={stats}
+                    onViewEmployee={handleViewEmployee}
+                    onSendMessage={handleSendMessage}
+                    onAddTask={handleAddTask}
+                  />
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <EmployeeDetailModal
-        employee={selectedEmployee}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        currentUserId={currentUserId}
-      />
+      {/* Employee Detail Modal */}
+      {selectedEmployee && (
+        <EmployeeDetailModal
+          employee={selectedEmployee}
+          activities={activities.filter(a => a.user_id === selectedEmployee.id)}
+          isOpen={!!selectedEmployee}
+          onClose={() => setSelectedEmployee(null)}
+        />
+      )}
 
-      {messagingRecipient && currentUserId && (
-        <MessagingSystemData
+      {/* Message Compose Modal */}
+      {messageRecipient && currentUserId && (
+        <MessageCompose
+          isOpen={!!messageRecipient}
+          onClose={() => setMessageRecipient(null)}
+          recipientId={messageRecipient.id}
+          recipientName={messageRecipient.name}
           currentUserId={currentUserId}
-          recipientId={messagingRecipient.id}
-          recipientName={messagingRecipient.name}
-          isOpen={isMessagingOpen}
-          onClose={() => setIsMessagingOpen(false)}
+        />
+      )}
+
+      {/* Create Task Dialog */}
+      {taskAssignee && (
+        <CreateTaskDialog
+          isOpen={!!taskAssignee}
+          onClose={() => setTaskAssignee(null)}
+          profiles={profiles}
+          preselectedEmployee={taskAssignee}
         />
       )}
     </div>
