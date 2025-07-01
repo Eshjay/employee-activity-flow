@@ -34,17 +34,35 @@ export const useTodos = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: todosData, error } = await supabase
         .from('todos')
-        .select(`
-          *,
-          task:task_id (title, assigned_by)
-        `)
+        .select('*')
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTodos(data || []);
+
+      // Fetch task details separately for todos that have task_id
+      const taskIds = todosData?.filter(todo => todo.task_id).map(todo => todo.task_id!) || [];
+      
+      let tasksMap = new Map();
+      if (taskIds.length > 0) {
+        const { data: tasksData, error: tasksError } = await supabase
+          .from('tasks')
+          .select('id, title, assigned_by')
+          .in('id', taskIds);
+
+        if (tasksError) throw tasksError;
+        tasksMap = new Map(tasksData?.map(task => [task.id, task]) || []);
+      }
+
+      const formattedTodos: Todo[] = todosData?.map(todo => ({
+        ...todo,
+        priority: todo.priority as Todo['priority'],
+        task: todo.task_id ? tasksMap.get(todo.task_id) : undefined
+      })) || [];
+
+      setTodos(formattedTodos);
     } catch (error) {
       console.error('Error fetching todos:', error);
       toast({
@@ -63,7 +81,15 @@ export const useTodos = () => {
     try {
       const { data, error } = await supabase
         .from('todos')
-        .insert([{ ...todoData, user_id: profile.id }])
+        .insert([{
+          user_id: profile.id,
+          title: todoData.title!,
+          description: todoData.description,
+          task_id: todoData.task_id,
+          priority: todoData.priority || 'medium',
+          due_date: todoData.due_date,
+          is_completed: todoData.is_completed || false
+        }])
         .select()
         .single();
 
@@ -91,7 +117,14 @@ export const useTodos = () => {
     try {
       const { error } = await supabase
         .from('todos')
-        .update(updates)
+        .update({
+          title: updates.title,
+          description: updates.description,
+          is_completed: updates.is_completed,
+          priority: updates.priority,
+          due_date: updates.due_date,
+          completed_at: updates.completed_at
+        })
         .eq('id', id);
 
       if (error) throw error;

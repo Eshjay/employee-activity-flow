@@ -27,21 +27,34 @@ export const useTasks = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: tasksData, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          assignee:assigned_to (name),
-          assigner:assigned_by (name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const formattedTasks = data.map(task => ({
+      // Fetch profile names separately to avoid join issues
+      const userIds = [...new Set([
+        ...tasksData.map(task => task.assigned_to),
+        ...tasksData.map(task => task.assigned_by)
+      ])];
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
+
+      const formattedTasks: Task[] = tasksData.map(task => ({
         ...task,
-        assignee_name: task.assignee?.name,
-        assigner_name: task.assigner?.name
+        priority: task.priority as Task['priority'],
+        status: task.status as Task['status'],
+        assignee_name: profileMap.get(task.assigned_to),
+        assigner_name: profileMap.get(task.assigned_by)
       }));
 
       setTasks(formattedTasks);
@@ -61,7 +74,15 @@ export const useTasks = () => {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .insert([taskData])
+        .insert([{
+          title: taskData.title!,
+          description: taskData.description,
+          assigned_to: taskData.assigned_to!,
+          assigned_by: taskData.assigned_by!,
+          due_date: taskData.due_date,
+          priority: taskData.priority || 'medium',
+          status: taskData.status || 'pending'
+        }])
         .select()
         .single();
 
@@ -89,7 +110,16 @@ export const useTasks = () => {
     try {
       const { error } = await supabase
         .from('tasks')
-        .update(updates)
+        .update({
+          title: updates.title,
+          description: updates.description,
+          assigned_to: updates.assigned_to,
+          assigned_by: updates.assigned_by,
+          due_date: updates.due_date,
+          priority: updates.priority,
+          status: updates.status,
+          completed_at: updates.completed_at
+        })
         .eq('id', id);
 
       if (error) throw error;
