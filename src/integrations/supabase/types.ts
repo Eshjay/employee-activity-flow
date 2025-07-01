@@ -15,10 +15,13 @@ export type Database = {
           created_at: string | null
           date: string
           description: string
+          duration_minutes: number | null
           id: string
+          is_time_tracked: boolean | null
           time_ended: string | null
           time_started: string | null
           title: string
+          todo_source_id: string | null
           user_id: string
         }
         Insert: {
@@ -26,10 +29,13 @@ export type Database = {
           created_at?: string | null
           date?: string
           description: string
+          duration_minutes?: number | null
           id?: string
+          is_time_tracked?: boolean | null
           time_ended?: string | null
           time_started?: string | null
           title: string
+          todo_source_id?: string | null
           user_id: string
         }
         Update: {
@@ -37,10 +43,13 @@ export type Database = {
           created_at?: string | null
           date?: string
           description?: string
+          duration_minutes?: number | null
           id?: string
+          is_time_tracked?: boolean | null
           time_ended?: string | null
           time_started?: string | null
           title?: string
+          todo_source_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -52,6 +61,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      draft_activities: {
+        Row: {
+          comments: string | null
+          created_at: string
+          description: string | null
+          id: string
+          time_ended: string | null
+          time_started: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          time_ended?: string | null
+          time_started?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          time_ended?: string | null
+          time_started?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       email_change_requests: {
         Row: {
@@ -267,6 +312,8 @@ export type Database = {
           employees_submitted: number
           file_path: string | null
           id: string
+          preview_data: Json | null
+          report_config: Json | null
           status: string
           total_employees: number
           type: string
@@ -280,6 +327,8 @@ export type Database = {
           employees_submitted?: number
           file_path?: string | null
           id?: string
+          preview_data?: Json | null
+          report_config?: Json | null
           status?: string
           total_employees?: number
           type: string
@@ -293,6 +342,8 @@ export type Database = {
           employees_submitted?: number
           file_path?: string | null
           id?: string
+          preview_data?: Json | null
+          report_config?: Json | null
           status?: string
           total_employees?: number
           type?: string
@@ -329,6 +380,93 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          assigned_by: string
+          assigned_to: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by: string
+          assigned_to: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string
+          assigned_to?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      todos: {
+        Row: {
+          completed_at: string | null
+          converted_to_activity_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_completed: boolean
+          priority: string
+          task_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          converted_to_activity_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean
+          priority?: string
+          task_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          converted_to_activity_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean
+          priority?: string
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -345,6 +483,15 @@ export type Database = {
       clear_expired_session: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      convert_todo_to_activity: {
+        Args: {
+          todo_id: string
+          time_started?: string
+          time_ended?: string
+          additional_comments?: string
+        }
+        Returns: string
       }
       is_developer: {
         Args: Record<PropertyKey, never>

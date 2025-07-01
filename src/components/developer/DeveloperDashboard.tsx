@@ -7,7 +7,8 @@ import { UserManagement } from "./UserManagement";
 import { DatabaseManagement } from "./DatabaseManagement";
 import { SystemSettings } from "./SystemSettings";
 import { SystemTester } from "../testing/SystemTester";
-import { Users, Database, Settings, TestTube, BarChart3 } from "lucide-react";
+import { TaskManagement } from "../tasks/TaskManagement";
+import { Users, Database, Settings, TestTube, BarChart3, Briefcase } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@/types/user";
 
@@ -17,11 +18,12 @@ interface DeveloperDashboardProps {
 }
 
 export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) => {
-  const [activeTab, setActiveTab] = useState<"users" | "database" | "settings" | "testing">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "database" | "settings" | "testing" | "tasks">("users");
   const isMobile = useIsMobile();
 
   const tabs = [
     { key: "users", label: "User Management", icon: Users },
+    { key: "tasks", label: "Task Management", icon: Briefcase },
     { key: "database", label: "Database", icon: Database },
     { key: "settings", label: "System Settings", icon: Settings },
     { key: "testing", label: "System Testing", icon: TestTube },
@@ -69,13 +71,13 @@ export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) 
         </div>
 
         {/* Tab Navigation */}
-        <div className={`${isMobile ? "flex flex-col gap-2" : "flex gap-4"} mb-4 sm:mb-6`}>
+        <div className={`${isMobile ? "flex flex-col gap-2" : "flex gap-4"} mb-4 sm:mb-6 ${isMobile ? "" : "overflow-x-auto"}`}>
           {tabs.map((tab) => (
             <Button
               key={tab.key}
               variant={activeTab === tab.key ? "default" : "outline"}
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={`${isMobile ? 'justify-start' : 'flex-1'} h-10 sm:h-12 text-sm sm:text-base`}
+              className={`${isMobile ? 'justify-start' : 'flex-1 flex-shrink-0'} h-10 sm:h-12 text-sm sm:text-base`}
               size={isMobile ? "sm" : "default"}
             >
               <tab.icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -86,6 +88,7 @@ export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) 
 
         {/* Tab Content */}
         {activeTab === "users" && <UserManagement />}
+        {activeTab === "tasks" && <TaskManagement />}
         {activeTab === "database" && <DatabaseManagement />}
         {activeTab === "settings" && <SystemSettings />}
         {activeTab === "testing" && <SystemTester />}

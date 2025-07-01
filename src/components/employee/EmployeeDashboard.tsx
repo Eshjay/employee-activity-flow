@@ -7,7 +7,9 @@ import { ActivityForm } from "./ActivityForm";
 import { ActivityHistoryData } from "./ActivityHistoryData";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { MessagingSystemData } from "../shared/MessagingSystemData";
-import { CheckCircle, Clock, Calendar, Mail, TrendingUp } from "lucide-react";
+import { TodoManagement } from "../todos/TodoManagement";
+import { TaskManagement } from "../tasks/TaskManagement";
+import { CheckCircle, Clock, Calendar, Mail, TrendingUp, CheckSquare, Briefcase } from "lucide-react";
 import { useActivities } from "@/hooks/useActivities";
 import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/hooks/useMessages";
@@ -23,7 +25,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
   const { profile } = useAuth();
   const { activities, fetchActivities } = useActivities();
   const { getUnreadCount } = useMessages(profile?.id);
-  const [activeTab, setActiveTab] = useState<"log" | "history">("log");
+  const [activeTab, setActiveTab] = useState<"log" | "history" | "todos" | "tasks">("log");
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false);
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -139,11 +141,11 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
         </Card>
 
         {/* Enhanced Tab Navigation */}
-        <div className="flex gap-3 mb-6 sm:mb-8">
+        <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto">
           <Button
             variant={activeTab === "log" ? "default" : "outline"}
             onClick={() => setActiveTab("log")}
-            className="flex-1 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
+            className="flex-shrink-0 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
             size={isMobile ? "sm" : "default"}
           >
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -152,23 +154,52 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
           <Button
             variant={activeTab === "history" ? "default" : "outline"}
             onClick={() => setActiveTab("history")}
-            className="flex-1 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
+            className="flex-shrink-0 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
             size={isMobile ? "sm" : "default"}
           >
             <Calendar className="w-4 h-4 mr-2" />
-            <span className="text-responsive-sm">View History</span>
+            <span className="text-responsive-sm">History</span>
+          </Button>
+          <Button
+            variant={activeTab === "todos" ? "default" : "outline"}
+            onClick={() => setActiveTab("todos")}
+            className="flex-shrink-0 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
+            size={isMobile ? "sm" : "default"}
+          >
+            <CheckSquare className="w-4 h-4 mr-2" />
+            <span className="text-responsive-sm">Todos</span>
+          </Button>
+          <Button
+            variant={activeTab === "tasks" ? "default" : "outline"}
+            onClick={() => setActiveTab("tasks")}
+            className="flex-shrink-0 h-12 sm:h-14 btn-hover-lift font-medium shadow-soft transition-all duration-200"
+            size={isMobile ? "sm" : "default"}
+          >
+            <Briefcase className="w-4 h-4 mr-2" />
+            <span className="text-responsive-sm">Tasks</span>
           </Button>
         </div>
 
         {/* Enhanced Tab Content */}
         <div className="animate-fade-in">
-          {activeTab === "log" ? (
+          {activeTab === "log" && (
             <div className="animate-slide-up">
               <ActivityForm />
             </div>
-          ) : (
+          )}
+          {activeTab === "history" && (
             <div className="animate-slide-up">
               <ActivityHistoryData />
+            </div>
+          )}
+          {activeTab === "todos" && (
+            <div className="animate-slide-up">
+              <TodoManagement />
+            </div>
+          )}
+          {activeTab === "tasks" && (
+            <div className="animate-slide-up">
+              <TaskManagement />
             </div>
           )}
         </div>
