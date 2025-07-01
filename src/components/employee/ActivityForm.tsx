@@ -132,7 +132,7 @@ export const ActivityForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="timeStarted">Start Time (Optional)</Label>
+              <Label htmlFor="timeStarted">Start Time </Label>
               <Input
                 id="timeStarted"
                 type="time"
@@ -143,7 +143,7 @@ export const ActivityForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="timeEnded">End Time (Optional)</Label>
+              <Label htmlFor="timeEnded">End Time </Label>
               <Input
                 id="timeEnded"
                 type="time"
