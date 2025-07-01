@@ -138,6 +138,7 @@ export const ActivityForm = () => {
                 type="time"
                 value={activityData.timeStarted}
                 onChange={(e) => handleInputChange('timeStarted', e.target.value)}
+                required
               />
             </div>
 
@@ -148,6 +149,7 @@ export const ActivityForm = () => {
                 type="time"
                 value={activityData.timeEnded}
                 onChange={(e) => handleInputChange('timeEnded', e.target.value)}
+                required
               />
             </div>
           </div>
