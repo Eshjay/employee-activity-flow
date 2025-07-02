@@ -1,5 +1,6 @@
 
 import type { Activity } from "@/hooks/useActivities";
+import type { EmployeeStats } from "./types";
 
 export const getEmployeeStatus = (employeeId: string, activities: Activity[]) => {
   const today = new Date().toISOString().split('T')[0];
@@ -39,4 +40,12 @@ export const getLastActivityDate = (employeeId: string, activities: Activity[]) 
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   return userActivities.length > 0 ? userActivities[0].date : 'No activities';
+};
+
+export const calculateEmployeeStats = (employeeId: string, activities: Activity[]): EmployeeStats => {
+  return {
+    todayCount: getTodayActivityCount(employeeId, activities),
+    weeklyCount: getWeeklyActivityCount(employeeId, activities),
+    status: getEmployeeStatus(employeeId, activities)
+  };
 };

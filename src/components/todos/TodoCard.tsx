@@ -11,9 +11,10 @@ import { format } from "date-fns";
 
 interface TodoCardProps {
   todo: Todo;
+  onConvertToActivity?: (todo: Todo) => void;
 }
 
-export const TodoCard = ({ todo }: TodoCardProps) => {
+export const TodoCard = ({ todo, onConvertToActivity }: TodoCardProps) => {
   const { updateTodo } = useTodos();
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
 
@@ -22,6 +23,14 @@ export const TodoCard = ({ todo }: TodoCardProps) => {
       is_completed: !todo.is_completed,
       completed_at: !todo.is_completed ? new Date().toISOString() : undefined
     });
+  };
+
+  const handleConvertToActivity = () => {
+    if (onConvertToActivity) {
+      onConvertToActivity(todo);
+    } else {
+      setIsConvertDialogOpen(true);
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -93,7 +102,7 @@ export const TodoCard = ({ todo }: TodoCardProps) => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setIsConvertDialogOpen(true)}
+              onClick={handleConvertToActivity}
               className="w-full text-xs"
             >
               <ArrowRight className="w-3 h-3 mr-1" />

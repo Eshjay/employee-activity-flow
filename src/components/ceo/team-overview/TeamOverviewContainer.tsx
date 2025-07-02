@@ -144,7 +144,12 @@ export const TeamOverviewContainer = ({
       {/* Employee Detail Modal */}
       {selectedEmployee && (
         <EmployeeDetailModal
-          employee={selectedEmployee}
+          employee={{
+            ...selectedEmployee,
+            status: 'active',
+            lastActivity: new Date().toISOString(),
+            activitiesThisWeek: calculateEmployeeStats(selectedEmployee.id, activities).weeklyCount
+          }}
           activities={activities.filter(a => a.user_id === selectedEmployee.id)}
           isOpen={!!selectedEmployee}
           onClose={() => setSelectedEmployee(null)}
@@ -154,11 +159,10 @@ export const TeamOverviewContainer = ({
       {/* Message Compose Modal */}
       {messageRecipient && currentUserId && (
         <MessageCompose
-          isOpen={!!messageRecipient}
-          onClose={() => setMessageRecipient(null)}
           recipientId={messageRecipient.id}
           recipientName={messageRecipient.name}
           currentUserId={currentUserId}
+          onClose={() => setMessageRecipient(null)}
         />
       )}
 
@@ -168,7 +172,12 @@ export const TeamOverviewContainer = ({
           isOpen={!!taskAssignee}
           onClose={() => setTaskAssignee(null)}
           profiles={profiles}
-          preselectedEmployee={taskAssignee}
+          preselectedEmployee={{
+            ...taskAssignee,
+            status: 'active',
+            last_login: null,
+            created_at: new Date().toISOString()
+          }}
         />
       )}
     </div>
