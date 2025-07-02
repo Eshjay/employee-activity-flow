@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { EmployeeCard } from "./EmployeeCard";
 import { EmployeeDetailModal } from "../../shared/EmployeeDetailModal";
-import { MessageCompose } from "../../shared/MessageCompose";
+import { MessagingSystemData } from "../../shared/MessagingSystemData";
 import { CreateTaskDialog } from "../../tasks/CreateTaskDialog";
 import { useProfiles } from "@/hooks/useProfiles";
 import { calculateEmployeeStats } from "./utils";
@@ -150,18 +150,19 @@ export const TeamOverviewContainer = ({
             lastActivity: new Date().toISOString(),
             activitiesThisWeek: calculateEmployeeStats(selectedEmployee.id, activities).weeklyCount
           }}
-          activities={activities.filter(a => a.user_id === selectedEmployee.id)}
           isOpen={!!selectedEmployee}
           onClose={() => setSelectedEmployee(null)}
+          currentUserId={currentUserId}
         />
       )}
 
-      {/* Message Compose Modal */}
+      {/* Message System */}
       {messageRecipient && currentUserId && (
-        <MessageCompose
+        <MessagingSystemData
+          currentUserId={currentUserId}
           recipientId={messageRecipient.id}
           recipientName={messageRecipient.name}
-          currentUserId={currentUserId}
+          isOpen={!!messageRecipient}
           onClose={() => setMessageRecipient(null)}
         />
       )}
@@ -174,6 +175,7 @@ export const TeamOverviewContainer = ({
           profiles={profiles}
           preselectedEmployee={{
             ...taskAssignee,
+            role: taskAssignee.role as "employee" | "ceo" | "developer",
             status: 'active',
             last_login: null,
             created_at: new Date().toISOString()
