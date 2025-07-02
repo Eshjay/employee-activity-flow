@@ -10,7 +10,7 @@ import { useProfiles } from '@/hooks/useProfiles';
 import { format } from 'date-fns';
 
 export const CEOTaskView = () => {
-  const { tasks, isLoading } = useTasks();
+  const { tasks, loading } = useTasks();
   const { profiles } = useProfiles();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
@@ -51,7 +51,7 @@ export const CEOTaskView = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card>
         <CardContent className="p-6">

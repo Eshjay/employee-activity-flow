@@ -13,6 +13,9 @@ export interface Activity {
   time_ended?: string;
   comments?: string;
   created_at?: string;
+  duration_minutes?: number;
+  is_time_tracked?: boolean;
+  todo_source_id?: string;
 }
 
 export const useActivities = () => {
@@ -62,6 +65,48 @@ export const useActivities = () => {
     }
   };
 
+  const createActivity = async (activityData: Partial<Activity>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('activities')
+        .insert([{
+          user_id: user.id,
+          title: activityData.title!,
+          description: activityData.description || '',
+          date: activityData.date || new Date().toISOString().split('T')[0],
+          time_started: activityData.time_started,
+          time_ended: activityData.time_ended,
+          comments: activityData.comments,
+          duration_minutes: activityData.duration_minutes,
+          is_time_tracked: activityData.is_time_tracked || false,
+          todo_source_id: activityData.todo_source_id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Activity created successfully",
+      });
+
+      fetchActivities();
+      return data;
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create activity",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const getTodaySubmissions = () => {
     const today = new Date().toISOString().split('T')[0];
     return activities.filter(activity => activity.date === today);
@@ -80,8 +125,10 @@ export const useActivities = () => {
   return {
     activities,
     loading,
+    isLoading: loading, // Add alias for compatibility
     fetchActivities,
     fetchUserActivities,
+    createActivity,
     getTodaySubmissions,
     getWeeklySubmissions,
   };

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useActivities, Activity } from './useActivities';
 
 export const useRecentActivities = (limit: number = 5) => {
-  const { activities, isLoading } = useActivities();
+  const { activities, loading } = useActivities();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   // Get recent activities sorted by date and creation time
@@ -25,7 +25,7 @@ export const useRecentActivities = (limit: number = 5) => {
 
   return {
     recentActivities,
-    isLoading,
+    isLoading: loading,
     selectedActivity,
     handleActivityClick,
     closeActivityDetail,
