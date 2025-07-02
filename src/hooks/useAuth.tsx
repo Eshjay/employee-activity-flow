@@ -91,13 +91,13 @@ export const useAuth = () => {
       
       // Redirect to auth page with a slight delay to ensure state is cleared
       setTimeout(() => {
-        window.location.href = "/auth";
+        window.location.href = "/";
       }, 100);
       
     } catch (error) {
       console.error("Error during sign out:", error);
       // Even if there's an error, redirect to auth page
-      window.location.href = "/auth";
+      window.location.href = "/";
     }
   };
 
