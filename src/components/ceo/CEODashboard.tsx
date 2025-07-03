@@ -7,7 +7,8 @@ import { TeamOverviewData } from "./TeamOverviewData";
 import { ActivityReports } from "./ActivityReports";
 import { EnhancedAnalytics } from "./EnhancedAnalytics";
 import { QuickTestReports } from "./QuickTestReports";
-import { BarChart3, Users, TrendingUp, Calendar, LineChart, TestTube } from "lucide-react";
+import { CEOTaskView } from "./tasks/CEOTaskView";
+import { BarChart3, Users, TrendingUp, Calendar, LineChart, TestTube, Briefcase } from "lucide-react";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useActivities } from "@/hooks/useActivities";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -19,7 +20,7 @@ interface CEODashboardProps {
 }
 
 export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "reports" | "analytics" | "testing">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "reports" | "analytics" | "testing" | "tasks">("overview");
   const { profiles } = useProfiles();
   const { activities } = useActivities();
   const isMobile = useIsMobile();
@@ -80,6 +81,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
     { key: "overview", label: isMobile ? "Overview" : "Team Overview", icon: Users },
     { key: "reports", label: isMobile ? "Reports" : "Activity Reports", icon: BarChart3 },
     { key: "analytics", label: isMobile ? "Analytics" : "Enhanced Analytics", icon: LineChart },
+    { key: "tasks", label: isMobile ? "Tasks" : "Task Management", icon: Briefcase },
     { key: "testing", label: isMobile ? "Testing" : "Quick Testing", icon: TestTube },
   ];
 
@@ -163,6 +165,11 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
           {activeTab === "analytics" && (
             <div className="animate-slide-up">
               <EnhancedAnalytics />
+            </div>
+          )}
+          {activeTab === "tasks" && (
+            <div className="animate-slide-up">
+              <CEOTaskView />
             </div>
           )}
           {activeTab === "testing" && (

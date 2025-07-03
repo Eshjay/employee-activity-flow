@@ -21,19 +21,36 @@ export const PasswordResetConfirm = () => {
   const [resetComplete, setResetComplete] = useState(false);
 
   useEffect(() => {
-    // Check for Supabase auth hash fragment
-    const hashFragment = window.location.hash;
-    if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
-      // User clicked reset link and has valid recovery session
-      setToken('valid');
-    } else {
-      toast({
-        title: "Invalid reset link",
-        description: "This password reset link is invalid or has expired.",
-        variant: "destructive",
-      });
-      navigate('/auth');
-    }
+    const checkAuthState = async () => {
+      try {
+        // Check for Supabase auth hash fragment
+        const hashFragment = window.location.hash;
+        
+        if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
+          // User clicked reset link and has valid recovery session
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            setToken('valid');
+            console.log('Valid recovery session found');
+          } else {
+            throw new Error('No valid recovery session found');
+          }
+        } else {
+          throw new Error('Invalid reset link - missing required parameters');
+        }
+      } catch (error) {
+        console.error('Password reset validation error:', error);
+        toast({
+          title: "Invalid reset link",
+          description: "This password reset link is invalid or has expired. Please request a new one.",
+          variant: "destructive",
+        });
+        navigate('/auth');
+      }
+    };
+
+    checkAuthState();
   }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
