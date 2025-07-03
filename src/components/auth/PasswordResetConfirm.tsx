@@ -21,9 +21,11 @@ export const PasswordResetConfirm = () => {
   const [resetComplete, setResetComplete] = useState(false);
 
   useEffect(() => {
-    const tokenFromUrl = searchParams.get('token');
-    if (tokenFromUrl) {
-      setToken(tokenFromUrl);
+    // Check for Supabase auth hash fragment
+    const hashFragment = window.location.hash;
+    if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
+      // User clicked reset link and has valid recovery session
+      setToken('valid');
     } else {
       toast({
         title: "Invalid reset link",
@@ -32,7 +34,7 @@ export const PasswordResetConfirm = () => {
       });
       navigate('/auth');
     }
-  }, [searchParams, navigate, toast]);
+  }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +60,8 @@ export const PasswordResetConfirm = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('reset-password', {
-        body: { token, newPassword },
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
       });
 
       if (error) {
@@ -73,7 +75,7 @@ export const PasswordResetConfirm = () => {
         setResetComplete(true);
         toast({
           title: "Password reset successful",
-          description: data?.message || "Your password has been updated successfully",
+          description: "Your password has been updated successfully",
         });
       }
     } catch (error) {

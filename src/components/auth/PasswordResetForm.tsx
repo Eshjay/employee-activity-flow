@@ -16,7 +16,7 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const [resetLink, setResetLink] = useState("");
+  
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,23 +26,18 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
     try {
       console.log('Attempting to send password reset for:', email);
 
-      const { data, error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-
-      console.log('Password reset response:', { data, error });
 
       if (error) {
         throw error;
       }
 
       setResetSent(true);
-      if (data?.resetLink) {
-        setResetLink(data.resetLink);
-      }
       toast({
         title: "Reset link sent",
-        description: data?.message || "If an account with that email exists, a password reset link has been sent.",
+        description: "If an account with that email exists, a password reset link has been sent.",
       });
     } catch (error) {
       console.error('Password reset error:', error);
@@ -67,19 +62,11 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {resetLink && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800 mb-2">
-                <strong>Development Mode:</strong> Use this link to reset your password:
-              </p>
-              <a 
-                href={resetLink}
-                className="text-blue-600 hover:text-blue-800 underline break-all text-xs"
-              >
-                {resetLink}
-              </a>
-            </div>
-          )}
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              ✓ Password reset email sent successfully. Please check your email for the reset link.
+            </p>
+          </div>
           <Button 
             variant="outline" 
             onClick={onBackToLogin}
