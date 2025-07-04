@@ -33,6 +33,10 @@ export const useAuth = () => {
     handleInitialSession
   } = useAuthState();
 
+  // Check if current session is a recovery session
+  const isRecoverySession = session?.access_token && 
+    window.location.hash.includes('type=recovery');
+
   const mounted = useRef(true);
   const initialized = useRef(false);
 
@@ -119,6 +123,7 @@ export const useAuth = () => {
     loading,
     signOut,
     isAuthenticated,
-    authError
+    authError,
+    isRecoverySession
   };
 };

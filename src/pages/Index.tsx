@@ -13,7 +13,7 @@ import type { User } from "@/types/user";
 export type { User };
 
 const Index = () => {
-  const { profile, signOut, loading, isAuthenticated, authError } = useAuth();
+  const { profile, signOut, loading, isAuthenticated, authError, isRecoverySession } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,15 +21,23 @@ const Index = () => {
       loading,
       isAuthenticated,
       hasProfile: !!profile,
-      authError
+      authError,
+      isRecoverySession
     });
+
+    // Redirect recovery sessions to password reset page
+    if (!loading && isRecoverySession) {
+      console.log('Index: Recovery session detected, redirecting to reset password');
+      navigate("/reset-password", { replace: true });
+      return;
+    }
 
     // Only redirect if not loading and definitely not authenticated
     if (!loading && !isAuthenticated && !authError) {
       console.log('Index: Redirecting to auth page');
       navigate("/auth", { replace: true }); // Use replace to prevent back button issues
     }
-  }, [loading, isAuthenticated, navigate, authError, profile]);
+  }, [loading, isAuthenticated, navigate, authError, profile, isRecoverySession]);
 
   // Early return for loading state
   if (loading) {

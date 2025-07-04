@@ -28,24 +28,29 @@ export const PasswordResetConfirm = () => {
         
         // Handle error cases first
         if (hashFragment.includes('error=')) {
-          const urlParams = new URLSearchParams(hashFragment.substring(1));
+          const urlParams = new URLSearchParams(hashFragment.substring(1));  
           const error = urlParams.get('error');
           const errorDescription = urlParams.get('error_description');
           
           throw new Error(errorDescription || `Reset failed: ${error}`);
         }
         
-        // Handle success case
+        // Handle success case - recovery sessions should have access_token and type=recovery
         if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
           // User clicked reset link and has valid recovery session
           const { data: { session } } = await supabase.auth.getSession();
           
-          if (session) {
+          if (session && session.user) {
             setToken('valid');
-            console.log('Valid recovery session found');
+            console.log('Valid recovery session found for user:', session.user.email);
           } else {
             throw new Error('No valid recovery session found');
           }
+        } else if (hashFragment.includes('access_token')) {
+          // This might be a regular login session, redirect to home
+          console.log('Regular session detected, redirecting to home');
+          navigate('/');
+          return;
         } else {
           throw new Error('Invalid reset link - missing required parameters');
         }
@@ -104,6 +109,9 @@ export const PasswordResetConfirm = () => {
           title: "Password reset successful",
           description: "Your password has been updated successfully",
         });
+        
+        // Clear the hash fragment to clean up the URL
+        window.history.replaceState(null, '', window.location.pathname);
       }
     } catch (error) {
       console.error('Password reset error:', error);
