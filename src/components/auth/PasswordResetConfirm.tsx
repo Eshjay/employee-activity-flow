@@ -26,6 +26,16 @@ export const PasswordResetConfirm = () => {
         // Check for Supabase auth hash fragment
         const hashFragment = window.location.hash;
         
+        // Handle error cases first
+        if (hashFragment.includes('error=')) {
+          const urlParams = new URLSearchParams(hashFragment.substring(1));
+          const error = urlParams.get('error');
+          const errorDescription = urlParams.get('error_description');
+          
+          throw new Error(errorDescription || `Reset failed: ${error}`);
+        }
+        
+        // Handle success case
         if (hashFragment.includes('access_token') && hashFragment.includes('type=recovery')) {
           // User clicked reset link and has valid recovery session
           const { data: { session } } = await supabase.auth.getSession();
@@ -43,7 +53,7 @@ export const PasswordResetConfirm = () => {
         console.error('Password reset validation error:', error);
         toast({
           title: "Invalid reset link",
-          description: "This password reset link is invalid or has expired. Please request a new one.",
+          description: error.message || "This password reset link is invalid or has expired. Please request a new one.",
           variant: "destructive",
         });
         navigate('/auth');
