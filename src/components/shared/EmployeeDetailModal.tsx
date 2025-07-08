@@ -75,10 +75,10 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => onClose()}>
-        <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[800px] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in">
-          <div className="flex flex-col h-full">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[80vh] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in">
+          <div className="flex flex-col h-full max-h-[80vh]">
             {/* Header */}
-            <DialogHeader className="p-4 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50">
+            <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50">
               <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                 <Avatar className="h-12 w-12 sm:h-14 sm:w-14 shadow-soft">
                   <AvatarFallback className="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-semibold text-lg">
@@ -96,7 +96,7 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
             </DialogHeader>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6">
               {/* Info Grid - Mobile Optimized */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
@@ -200,7 +200,7 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-25">
+            <div className="flex-shrink-0 p-4 sm:p-6 border-t border-slate-100 bg-slate-25">
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   variant="outline" 

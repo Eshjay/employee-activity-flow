@@ -4,15 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, Filter, Eye } from 'lucide-react';
+import { Calendar, Clock, User, Filter, Eye, Plus } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { useProfiles } from '@/hooks/useProfiles';
+import { useAuth } from '@/hooks/useAuth';
+import { CreateTaskDialog } from '../../tasks/CreateTaskDialog';
+import { TaskCard } from '../../tasks/TaskCard';
 import { format } from 'date-fns';
 
 export const CEOTaskView = () => {
   const { tasks, loading } = useTasks();
   const { profiles } = useProfiles();
+  const { profile } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  const canCreateTasks = profile?.role === 'ceo' || profile?.role === 'developer';
 
   // Filter tasks based on selected status
   const filteredTasks = selectedStatus === 'all' 
@@ -65,6 +72,31 @@ export const CEOTaskView = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header with Create Button */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-lg sm:text-xl font-semibold">
+                Task Management
+              </CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Assign and track tasks across your team
+              </p>
+            </div>
+            {canCreateTasks && (
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Task
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+      </Card>
+
       {/* Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -161,55 +193,26 @@ export const CEOTaskView = () => {
               <p className="text-gray-500 dark:text-gray-400">No tasks found</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredTasks.map((task) => (
-                <Card key={task.id} className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-gray-800 dark:text-gray-200">
-                            {task.title}
-                          </h3>
-                          <Badge className={getPriorityColor(task.priority)}>
-                            {task.priority}
-                          </Badge>
-                          <Badge className={getStatusColor(task.status)}>
-                            {task.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                        
-                        {task.description && (
-                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
-                            {task.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            <span>Assigned to: {getEmployeeName(task.assigned_to)}</span>
-                          </div>
-                          {task.due_date && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>Due: {format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>Created: {format(new Date(task.created_at), 'MMM dd, yyyy')}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  canEdit={true}
+                  getStatusColor={getStatusColor}
+                  getPriorityColor={getPriorityColor}
+                />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <CreateTaskDialog 
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        profiles={profiles}
+      />
     </div>
   );
 };

@@ -34,8 +34,11 @@ export const useAuth = () => {
   } = useAuthState();
 
   // Check if current session is a recovery session
-  const isRecoverySession = session?.access_token && 
-    window.location.hash.includes('type=recovery');
+  const isRecoverySession = Boolean(
+    session?.access_token && 
+    window.location.hash.includes('type=recovery') &&
+    window.location.hash.includes('access_token')
+  );
 
   const mounted = useRef(true);
   const initialized = useRef(false);
