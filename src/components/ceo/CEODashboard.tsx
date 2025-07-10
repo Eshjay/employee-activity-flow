@@ -24,7 +24,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
   const { activities } = useActivities();
   const isMobile = useIsMobile();
 
-  // Calculate real statistics
+  // Calculate statistics
   const employees = profiles.filter(p => p.role === 'employee');
   const today = new Date().toISOString().split('T')[0];
   const oneWeekAgo = new Date();
@@ -33,7 +33,6 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
   const todaySubmissions = activities.filter(activity => activity.date === today);
   const weeklySubmissions = activities.filter(activity => new Date(activity.date) >= oneWeekAgo);
   
-  // Calculate active employees (those who submitted activities in the last 7 days)
   const activeEmployeeIds = new Set(weeklySubmissions.map(a => a.user_id));
   const activeEmployeesCount = employees.filter(emp => activeEmployeeIds.has(emp.id)).length;
 
@@ -44,7 +43,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
       icon: Users, 
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      change: ${employees.length} registered,
+      change: `${employees.length} registered`,
       trend: "neutral"
     },
     { 
@@ -67,11 +66,11 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
     },
     { 
       title: "Active Employees", 
-      value: ${activeEmployeesCount}/${employees.length}, 
+      value: `${activeEmployeesCount}/${employees.length}`, 
       icon: Calendar, 
       color: "text-amber-600",
       bgColor: "bg-amber-50",
-      change: ${Math.round((activeEmployeesCount/employees.length) * 100)}% participation,
+      change: `${Math.round((activeEmployeesCount/employees.length) * 100)}% participation`,
       trend: "neutral"
     },
   ];
@@ -85,42 +84,46 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-25 via-blue-25 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <DashboardHeader user={user} onLogout={onLogout} />
       
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-7xl">
         {/* Header */}
         <div className="mb-6 sm:mb-8 animate-fade-in">
-          <h1 className="text-responsive-2xl font-bold text-slate-800 mb-2 text-balance">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2 text-balance">
             Executive Dashboard
           </h1>
-          <p className="text-responsive-base text-slate-600 text-pretty">
+          <p className="text-sm sm:text-base text-slate-600 text-pretty">
             Monitor team productivity and activity reports • Real-time insights
           </p>
         </div>
 
-        {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="card-elevated hover:shadow-strong transition-all duration-300 animate-fade-in border-0" style={{ animationDelay: ${index * 100}ms }}>
-              <CardContent className="padding-responsive">
+            <Card 
+              key={index} 
+              className="border-0 bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300 animate-fade-in" 
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={p-2 sm:p-3 rounded-xl ${stat.bgColor} shadow-subtle}>
-                    <stat.icon className={w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${stat.color}} />
+                  <div className={`p-2 sm:p-3 rounded-lg ${stat.bgColor}`}>
+                    <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color}`} />
                   </div>
-                  <div className={px-2 py-1 rounded-full text-2xs sm:text-xs font-medium ${
-                    stat.trend === 'up' ? 'bg-green-50 text-green-700' : 
-                    stat.trend === 'down' ? 'bg-red-50 text-red-700' : 
-                    'bg-slate-50 text-slate-600'
-                  }}>
+                  <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                    stat.trend === 'up' ? 'bg-green-100 text-green-700' : 
+                    stat.trend === 'down' ? 'bg-red-100 text-red-700' : 
+                    'bg-slate-100 text-slate-600'
+                  }`}>
                     {isMobile ? stat.change.split(' ')[0] : stat.change}
                   </div>
                 </div>
                 <div>
-                  <p className="text-2xs sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">
                     {stat.title}
                   </p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 leading-none">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 leading-tight">
                     {stat.value}
                   </p>
                 </div>
@@ -129,27 +132,26 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
           ))}
         </div>
 
-        {/* Enhanced Tab Navigation */}
-        <div className={${isMobile ? "grid grid-cols-2 gap-2" : "flex gap-3"} mb-6 sm:mb-8}>
-          {tabs.map((tab, index) => (
+        {/* Tab Navigation */}
+        <div className={`mb-6 sm:mb-8 ${isMobile ? 'grid grid-cols-3 gap-2' : 'flex flex-wrap gap-3'}`}>
+          {tabs.map((tab) => (
             <Button
               key={tab.key}
               variant={activeTab === tab.key ? "default" : "outline"}
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={${isMobile ? "flex-col h-16 p-3" : "flex-1 h-12"} 
-                         btn-hover-lift font-medium transition-all duration-200 
-                         ${activeTab === tab.key ? 'shadow-medium' : 'shadow-soft'}}
-              size={isMobile ? "sm" : "default"}
+              className={`
+                ${isMobile ? 'h-14 p-2 text-xs' : 'flex-1 min-w-[120px] h-12 text-sm'}
+                font-medium transition-all duration-200 hover:shadow-md
+                ${activeTab === tab.key ? 'bg-blue-600 hover:bg-blue-700' : 'bg-white/80 hover:bg-white'}
+              `}
             >
-              <tab.icon className={${isMobile ? "w-5 h-5 mb-1" : "w-4 h-4 mr-2"} flex-shrink-0} />
-              <span className={${isMobile ? "text-2xs" : "text-sm"} font-medium}>
-                {tab.label}
-              </span>
+              <tab.icon className={`${isMobile ? 'w-5 h-5 mb-1' : 'w-4 h-4 mr-2'} flex-shrink-0`} />
+              <span className="truncate">{tab.label}</span>
             </Button>
           ))}
         </div>
 
-        {/* Enhanced Tab Content */}
+        {/* Tab Content */}
         <div className="animate-fade-in">
           {activeTab === "overview" && (
             <div className="animate-slide-up">
