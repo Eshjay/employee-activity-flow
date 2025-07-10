@@ -81,7 +81,7 @@ export const TeamOverviewContainer = ({
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <Card key={index} className="border-0 shadow-medium">
             <CardContent className="p-4">
@@ -122,10 +122,10 @@ export const TeamOverviewContainer = ({
               <p className="text-slate-500">No employees found</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {employees.map((employee) => {
                 const stats = calculateEmployeeStats(employee.id, activities);
-                return (
+                return ( <div className="w-full overflow-hidden">
                   <EmployeeCard
                     key={employee.id}
                     employee={employee}
@@ -134,6 +134,7 @@ export const TeamOverviewContainer = ({
                     onSendMessage={handleSendMessage}
                     onAddTask={handleAddTask}
                   />
+                </div>
                 );
               })}
             </div>
