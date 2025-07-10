@@ -1,4 +1,3 @@
-ple
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +44,7 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
       icon: Users, 
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-      change: `${employees.length} registered`,
+      change: ${employees.length} registered,
       trend: "neutral"
     },
     { 
@@ -68,11 +67,11 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
     },
     { 
       title: "Active Employees", 
-      value: `${activeEmployeesCount}/${employees.length}`, 
+      value: ${activeEmployeesCount}/${employees.length}, 
       icon: Calendar, 
       color: "text-amber-600",
       bgColor: "bg-amber-50",
-      change: `${Math.round((activeEmployeesCount/employees.length) * 100)}% participation`,
+      change: ${Math.round((activeEmployeesCount/employees.length) * 100)}% participation,
       trend: "neutral"
     },
   ];
@@ -103,17 +102,17 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         {/* Enhanced Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="card-elevated hover:shadow-strong transition-all duration-300 animate-fade-in border-0" style={{ animationDelay: `${index * 100}ms` }}>
+            <Card key={index} className="card-elevated hover:shadow-strong transition-all duration-300 animate-fade-in border-0" style={{ animationDelay: ${index * 100}ms }}>
               <CardContent className="padding-responsive">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`p-2 sm:p-3 rounded-xl ${stat.bgColor} shadow-subtle`}>
-                    <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${stat.color}`} />
+                  <div className={p-2 sm:p-3 rounded-xl ${stat.bgColor} shadow-subtle}>
+                    <stat.icon className={w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${stat.color}} />
                   </div>
-                  <div className={`px-2 py-1 rounded-full text-2xs sm:text-xs font-medium ${
+                  <div className={px-2 py-1 rounded-full text-2xs sm:text-xs font-medium ${
                     stat.trend === 'up' ? 'bg-green-50 text-green-700' : 
                     stat.trend === 'down' ? 'bg-red-50 text-red-700' : 
                     'bg-slate-50 text-slate-600'
-                  }`}>
+                  }}>
                     {isMobile ? stat.change.split(' ')[0] : stat.change}
                   </div>
                 </div>
@@ -131,20 +130,19 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         </div>
 
         {/* Enhanced Tab Navigation */}
-        <div className={`${isMobile ? "flex overflow-x-auto gap-2 scrollbar-hide -mx-2 px-2" : "flex gap-3"} mb-6 sm:mb-8`}>
+        <div className={${isMobile ? "grid grid-cols-2 gap-2" : "flex gap-3"} mb-6 sm:mb-8}>
           {tabs.map((tab, index) => (
             <Button
               key={tab.key}
               variant={activeTab === tab.key ? "default" : "outline"}
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={`${isMobile ? "min-w-[110px] flex-col h-16 p-3" : "flex-1 h-12"} 
-                flex items-center justify-center text-center whitespace-nowrap
-                btn-hover-lift font-medium transition-all duration-200 
-                ${activeTab === tab.key ? 'shadow-medium' : 'shadow-soft'}`}
+              className={${isMobile ? "flex-col h-16 p-3" : "flex-1 h-12"} 
+                         btn-hover-lift font-medium transition-all duration-200 
+                         ${activeTab === tab.key ? 'shadow-medium' : 'shadow-soft'}}
               size={isMobile ? "sm" : "default"}
             >
-              <tab.icon className={`${isMobile ? "w-5 h-5 mb-1" : "w-4 h-4 mr-2"} flex-shrink-0`} />
-              <span className={`${isMobile ? "text-2xs" : "text-sm"} font-medium`}>
+              <tab.icon className={${isMobile ? "w-5 h-5 mb-1" : "w-4 h-4 mr-2"} flex-shrink-0} />
+              <span className={${isMobile ? "text-2xs" : "text-sm"} font-medium}>
                 {tab.label}
               </span>
             </Button>
