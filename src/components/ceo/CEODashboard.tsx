@@ -1,4 +1,4 @@
-
+ple
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -131,15 +131,16 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
         </div>
 
         {/* Enhanced Tab Navigation */}
-        <div className={`${isMobile ? "grid grid-cols-2 gap-2" : "flex gap-3"} mb-6 sm:mb-8`}>
+        <div className={`${isMobile ? "flex overflow-x-auto gap-2 scrollbar-hide -mx-2 px-2" : "flex gap-3"} mb-6 sm:mb-8`}>
           {tabs.map((tab, index) => (
             <Button
               key={tab.key}
               variant={activeTab === tab.key ? "default" : "outline"}
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={`${isMobile ? "flex-col h-16 p-3" : "flex-1 h-12"} 
-                         btn-hover-lift font-medium transition-all duration-200 
-                         ${activeTab === tab.key ? 'shadow-medium' : 'shadow-soft'}`}
+              className={`${isMobile ? "min-w-[110px] flex-col h-16 p-3" : "flex-1 h-12"} 
+                flex items-center justify-center text-center whitespace-nowrap
+                btn-hover-lift font-medium transition-all duration-200 
+                ${activeTab === tab.key ? 'shadow-medium' : 'shadow-soft'}`}
               size={isMobile ? "sm" : "default"}
             >
               <tab.icon className={`${isMobile ? "w-5 h-5 mb-1" : "w-4 h-4 mr-2"} flex-shrink-0`} />
