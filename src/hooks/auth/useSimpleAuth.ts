@@ -20,9 +20,10 @@ export const useSimpleAuth = () => {
 
   // Check if current session is a recovery session
   const isRecoverySession = Boolean(
-    session?.access_token && 
-    window.location.hash.includes('type=recovery') &&
-    window.location.hash.includes('access_token')
+    session?.access_token && (
+      (window.location.hash.includes('type=recovery') && window.location.hash.includes('access_token')) ||
+      (window.location.search.includes('type=recovery') && window.location.search.includes('access_token'))
+    )
   );
 
   useEffect(() => {

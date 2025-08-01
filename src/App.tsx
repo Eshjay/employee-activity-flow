@@ -20,6 +20,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<ResetPassword />} />
             <Route path="/bulk-invite" element={<BulkInvite />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

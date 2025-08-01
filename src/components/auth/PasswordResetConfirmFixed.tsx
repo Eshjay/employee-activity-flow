@@ -18,21 +18,58 @@ export const PasswordResetConfirmFixed = () => {
   const [validToken, setValidToken] = useState<'checking' | 'valid' | 'invalid'>('checking');
 
   useEffect(() => {
-    const checkRecoverySession = () => {
+    const checkRecoverySession = async () => {
       console.log('PasswordResetConfirm: Checking recovery session');
+      console.log('Current URL:', window.location.href);
       console.log('Current hash:', window.location.hash);
+      console.log('Current search:', window.location.search);
       
-      // Check if we have an access_token and type=recovery in the URL hash
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.substring(1));
+      // Check both URL hash and search params for tokens
+      let params: URLSearchParams;
+      let accessToken: string | null = null;
+      let tokenType: string | null = null;
+      let type: string | null = null;
+      let error: string | null = null;
+      let errorDescription: string | null = null;
       
-      const accessToken = params.get('access_token');
-      const tokenType = params.get('token_type');
-      const type = params.get('type');
-      const error = params.get('error');
-      const errorDescription = params.get('error_description');
+      // First check URL hash (Supabase typically uses hash for auth tokens)
+      if (window.location.hash) {
+        params = new URLSearchParams(window.location.hash.substring(1));
+        accessToken = params.get('access_token');
+        tokenType = params.get('token_type');
+        type = params.get('type');
+        error = params.get('error');
+        errorDescription = params.get('error_description');
+      }
       
-      console.log('Hash params:', { accessToken: !!accessToken, tokenType, type, error });
+      // If not found in hash, check search params
+      if (!accessToken && !error && window.location.search) {
+        params = new URLSearchParams(window.location.search);
+        accessToken = params.get('access_token');
+        tokenType = params.get('token_type');
+        type = params.get('type');
+        error = params.get('error');
+        errorDescription = params.get('error_description');
+      }
+      
+      // Also check if Supabase has already handled the auth session
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (session && !accessToken) {
+          console.log('Found existing Supabase session, checking if it\'s a recovery session');
+          // Check if we arrived here from a password reset link
+          const urlHasRecoveryParams = window.location.href.includes('type=recovery') || 
+                                      document.referrer.includes('type=recovery');
+          if (urlHasRecoveryParams) {
+            accessToken = session.access_token;
+            type = 'recovery';
+          }
+        }
+      } catch (sessionError) {
+        console.error('Error checking session:', sessionError);
+      }
+      
+      console.log('Auth params found:', { accessToken: !!accessToken, tokenType, type, error, errorDescription });
       
       if (error) {
         console.error('Auth error in URL:', error, errorDescription);
