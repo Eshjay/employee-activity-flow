@@ -53,17 +53,17 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
 
   if (resetSent) {
     return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="text-center">
-          <Mail className="w-12 h-12 mx-auto text-green-600 mb-4" />
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
-            We've sent a password reset link to {email}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800">
+      <Card>
+        <CardContent className="pt-6 text-center space-y-4">
+          <Mail className="w-12 h-12 mx-auto text-green-600" />
+          <div>
+            <h3 className="text-lg font-semibold">Check your email</h3>
+            <p className="text-muted-foreground text-sm">
+              We've sent a password reset link to {email}
+            </p>
+          </div>
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-sm text-green-800 dark:text-green-200">
               ✓ Password reset email sent successfully. Please check your email for the reset link.
             </p>
           </div>
@@ -81,16 +81,10 @@ export const PasswordResetForm = ({ onBackToLogin }: PasswordResetFormProps) => 
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle>Reset Password</CardTitle>
-        <CardDescription>
-          Enter your email address and we'll send you a reset link
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"

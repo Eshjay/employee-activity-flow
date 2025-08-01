@@ -67,21 +67,13 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-bg-light to-brand-bg-dark flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="flex flex-col items-center gap-3 text-center">
-          <BrandLogo size={56} className="mb-1 mt-2 drop-shadow-md" />
-          <CardTitle className="text-[1.6rem] font-bold text-brand-primary drop-shadow-sm">
-            Allure CV Signatures
-          </CardTitle>
-          <CardDescription className="text-brand-secondary">
-            Sign in to your account or create a developer account
-          </CardDescription>
-          
-          {authError && (
-            <div className="w-full">
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-2">
-                <p className="text-sm text-red-700">{authError}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        {authError && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
+                <p className="text-sm text-red-700 dark:text-red-200">{authError}</p>
               </div>
               <Button
                 onClick={handleRepairAuth}
@@ -93,26 +85,25 @@ const Auth = () => {
                 <Wrench className="w-4 h-4 mr-2" />
                 {isRepairing ? "Repairing..." : "Repair Authentication"}
               </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="developer-signup">Developer Signup</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <SignInForm />
-            </TabsContent>
-            
-            <TabsContent value="developer-signup">
-              <DeveloperSignupForm />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="developer-signup">Developer Signup</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="signin" className="mt-0">
+            <SignInForm />
+          </TabsContent>
+          
+          <TabsContent value="developer-signup" className="mt-0">
+            <DeveloperSignupForm />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { cleanupAuthState } from "@/hooks/useAuth";
 import { SignupWithInvitation } from "./SignupWithInvitation";
 import { PasswordResetForm } from "./PasswordResetForm";
 import { BrandLogo } from "../shared/BrandLogo";
+import { AuthLayout } from "./AuthLayout";
 
 export const SignInForm = () => {
   const [email, setEmail] = useState("");
@@ -90,72 +91,71 @@ export const SignInForm = () => {
 
   if (mode === "signup" && invitationEmail && invitationToken) {
     return (
-      <SignupWithInvitation
-        email={invitationEmail}
-        token={invitationToken}
-        onSuccess={handleSuccess}
-        onBackToLogin={handleBackToLogin}
-      />
+      <AuthLayout title="Complete Your Registration" description="Set up your account to get started">
+        <SignupWithInvitation
+          email={invitationEmail}
+          token={invitationToken}
+          onSuccess={handleSuccess}
+          onBackToLogin={handleBackToLogin}
+        />
+      </AuthLayout>
     );
   }
 
   if (mode === "reset") {
-    return <PasswordResetForm onBackToLogin={() => setMode("signin")} />;
+    return (
+      <AuthLayout title="Reset Password" description="Enter your email to receive a password reset link">
+        <PasswordResetForm onBackToLogin={() => setMode("signin")} />
+      </AuthLayout>
+    );
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center space-y-4">
-        <BrandLogo />
-        <div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>
-            Sign in to your Activity Tracker account
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
-          
-          <div className="text-center space-y-2">
-            <Button
-              type="button"
-              variant="link"
-              onClick={() => setMode("reset")}
-              className="text-sm"
-            >
-              Forgot your password?
+    <AuthLayout title="Welcome Back" description="Sign in to your Activity Tracker account">
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+            
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => setMode("reset")}
+                className="text-sm"
+              >
+                Forgot your password?
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 };
