@@ -65,7 +65,7 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-25 via-blue-25 to-emerald-25">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors duration-300">
       <DashboardHeader user={user} onLogout={onLogout} />
       
       <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
@@ -73,11 +73,11 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
         <div className="mb-6 sm:mb-8 animate-fade-in">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-responsive-2xl font-bold text-slate-800 mb-2 text-balance">
+              <h1 className="text-responsive-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-balance">
                 Welcome back, {isMobile ? user.name.split(' ')[0] : user.name}! 👋
               </h1>
-              <div className="flex items-center gap-2 text-responsive-base text-slate-600">
-                <Calendar className="w-4 h-4 text-blue-500" />
+              <div className="flex items-center gap-2 text-responsive-base text-slate-600 dark:text-slate-400">
+                <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 <span>{today}</span>
               </div>
             </div>
@@ -105,18 +105,18 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
           <CardContent className="padding-responsive">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
               <div className="flex items-center gap-4 flex-1">
-                <div className={`p-3 sm:p-4 rounded-2xl shadow-soft ${hasSubmittedToday ? 'bg-green-50' : 'bg-amber-50'}`}>
+                <div className={`p-3 sm:p-4 rounded-2xl shadow-soft transition-colors duration-300 ${hasSubmittedToday ? 'bg-green-50 dark:bg-green-950/20' : 'bg-amber-50 dark:bg-amber-950/20'}`}>
                   {hasSubmittedToday ? (
-                    <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
+                    <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 dark:text-green-400" />
                   ) : (
-                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
+                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 dark:text-amber-400" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className={`text-responsive-lg font-bold mb-1 ${hasSubmittedToday ? 'text-green-700' : 'text-amber-700'}`}>
+                  <h3 className={`text-responsive-lg font-bold mb-1 transition-colors duration-300 ${hasSubmittedToday ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
                     {hasSubmittedToday ? "Today's Activity Logged ✓" : "Daily Activity Pending"}
                   </h3>
-                  <p className={`text-responsive-sm ${hasSubmittedToday ? 'text-green-600' : 'text-amber-600'}`}>
+                  <p className={`text-responsive-sm transition-colors duration-300 ${hasSubmittedToday ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
                     {hasSubmittedToday 
                       ? "Great job! Your daily report has been submitted successfully." 
                       : "Please log your activities for today to stay on track."
@@ -128,12 +128,12 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
               {/* Activity Stats */}
               <div className="flex gap-6 lg:gap-8">
                 <div className="text-center">
-                  <p className="text-xl sm:text-2xl font-bold text-slate-800">{userActivities.length}</p>
-                  <p className="text-xs sm:text-sm text-slate-500 font-medium">Total Activities</p>
+                  <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-200">{userActivities.length}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Total Activities</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl sm:text-2xl font-bold text-slate-800">{thisWeekActivities.length}</p>
-                  <p className="text-xs sm:text-sm text-slate-500 font-medium">This Week</p>
+                  <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-200">{thisWeekActivities.length}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">This Week</p>
                 </div>
               </div>
             </div>
