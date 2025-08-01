@@ -84,16 +84,16 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors duration-300">
       <DashboardHeader user={user} onLogout={onLogout} />
       
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 max-w-7xl">
         {/* Header */}
         <div className="mb-6 sm:mb-8 animate-fade-in">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 mb-2 text-balance">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-balance">
             Executive Dashboard
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 text-pretty">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 text-pretty">
             Monitor team productivity and activity reports • Real-time insights
           </p>
         </div>
@@ -103,27 +103,27 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
           {stats.map((stat, index) => (
             <Card 
               key={index} 
-              className="border-0 bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300 animate-fade-in" 
+              className="border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300 animate-fade-in" 
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`p-2 sm:p-3 rounded-lg ${stat.bgColor}`}>
-                    <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color}`} />
+                  <div className={`p-2 sm:p-3 rounded-lg transition-colors duration-300 ${stat.bgColor} dark:${stat.bgColor.replace('bg-', 'bg-').replace('-50', '-950/20')}`}>
+                    <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color} dark:${stat.color.replace('text-', 'text-').replace('-600', '-400')}`} />
                   </div>
-                  <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                    stat.trend === 'up' ? 'bg-green-100 text-green-700' : 
-                    stat.trend === 'down' ? 'bg-red-100 text-red-700' : 
-                    'bg-slate-100 text-slate-600'
+                  <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors duration-300 ${
+                    stat.trend === 'up' ? 'bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-300' : 
+                    stat.trend === 'down' ? 'bg-red-100 dark:bg-red-950/20 text-red-700 dark:text-red-300' : 
+                    'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}>
                     {isMobile ? stat.change.split(' ')[0] : stat.change}
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
                     {stat.title}
                   </p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 leading-tight">
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 dark:text-slate-200 leading-tight">
                     {stat.value}
                   </p>
                 </div>

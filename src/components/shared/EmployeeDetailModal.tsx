@@ -4,9 +4,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Mail, Building2, TrendingUp, Clock } from "lucide-react";
+import { Calendar, Mail, Building2, TrendingUp, Clock, History, Download } from "lucide-react";
 import { MessagingSystemData } from "./MessagingSystemData";
+import { FullHistoryModal } from "./FullHistoryModal";
 import { useActivities, type Activity } from "@/hooks/useActivities";
+import { generateEmployeePDFReport } from "@/utils/reports/pdfReportGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 interface Employee {
   id: string;
@@ -27,8 +30,11 @@ interface EmployeeDetailModalProps {
 
 export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }: EmployeeDetailModalProps) => {
   const [isMessagingOpen, setIsMessagingOpen] = useState(false);
+  const [showFullHistory, setShowFullHistory] = useState(false);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [allActivities, setAllActivities] = useState<Activity[]>([]);
   const { fetchUserActivities } = useActivities();
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadEmployeeActivities = async () => {
@@ -72,13 +78,51 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
     return 8;
   };
 
+  const handleViewFullHistory = () => {
+    setShowFullHistory(true);
+  };
+
+  const handleGeneratePDF = async () => {
+    try {
+      if (!employee) return;
+      
+      toast({
+        title: "Generating PDF Report",
+        description: "Creating daily activity report...",
+      });
+
+      // Get today's activities for this employee
+      const todaysActivities = recentActivities.filter(
+        activity => {
+          const activityDate = new Date(activity.date).toDateString();
+          const today = new Date().toDateString();
+          return activityDate === today;
+        }
+      );
+
+      await generateEmployeePDFReport(employee.name, todaysActivities, 'daily');
+      
+      toast({
+        title: "PDF Report Generated",
+        description: `Daily report for ${employee.name} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Failed to generate PDF report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => onClose()}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[80vh] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[80vh] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in dark:bg-gray-900 dark:border-gray-700">
           <div className="flex flex-col h-full max-h-[80vh]">
             {/* Header */}
-            <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50">
+            <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-slate-100 dark:border-gray-700 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-gray-800 dark:to-gray-700">
               <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                 <Avatar className="h-12 w-12 sm:h-14 sm:w-14 shadow-soft">
                   <AvatarFallback className="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-semibold text-lg">
@@ -86,11 +130,11 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-responsive-xl font-bold text-slate-800 mb-1">{employee.name}</h2>
-                  <p className="text-responsive-base text-slate-600">{employee.department}</p>
+                  <h2 className="text-responsive-xl font-bold text-slate-800 dark:text-gray-100 mb-1">{employee.name}</h2>
+                  <p className="text-responsive-base text-slate-600 dark:text-gray-300">{employee.department}</p>
                 </div>
               </DialogTitle>
-              <DialogDescription className="text-responsive-sm text-slate-500 mt-2">
+              <DialogDescription className="text-responsive-sm text-slate-500 dark:text-gray-300 mt-2">
                 Employee activity details and performance overview
               </DialogDescription>
             </DialogHeader>
@@ -205,8 +249,18 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
                 <Button 
                   variant="outline" 
                   className="flex-1 touch-target btn-hover-lift text-responsive-sm font-medium"
+                  onClick={handleViewFullHistory}
                 >
+                  <History className="w-4 h-4 mr-2" />
                   View Full History
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 touch-target btn-hover-lift text-responsive-sm font-medium"
+                  onClick={handleGeneratePDF}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export PDF
                 </Button>
                 <Button 
                   variant="outline" 
@@ -227,6 +281,13 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Full History Modal */}
+      <FullHistoryModal
+        employee={employee}
+        isOpen={showFullHistory}
+        onClose={() => setShowFullHistory(false)}
+      />
 
       {/* Messaging System */}
       {currentUserId && (

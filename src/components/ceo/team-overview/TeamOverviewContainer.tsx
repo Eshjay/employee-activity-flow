@@ -83,17 +83,17 @@ export const TeamOverviewContainer = ({
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <Card key={index} className="border-0 shadow-medium">
+          <Card key={index} className="border-0 shadow-medium dark:bg-slate-800 transition-colors duration-300">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                <div className={`p-2 rounded-lg transition-colors duration-300 ${stat.bgColor} dark:${stat.bgColor.replace('bg-', 'bg-').replace('-50', '-950/20')}`}>
+                  <stat.icon className={`w-5 h-5 ${stat.color} dark:${stat.color.replace('text-', 'text-').replace('-600', '-400')}`} />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     {stat.title}
                   </p>
-                  <p className="text-xl font-bold text-slate-800">
+                  <p className="text-xl font-bold text-slate-800 dark:text-slate-200">
                     {stat.value}
                   </p>
                 </div>
@@ -104,10 +104,10 @@ export const TeamOverviewContainer = ({
       </div>
 
       {/* Team Overview */}
-      <Card className="border-0 shadow-medium">
+      <Card className="border-0 shadow-medium dark:bg-slate-800 transition-colors duration-300">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold text-slate-800">
+            <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-200">
               Team Overview
             </CardTitle>
             <Badge variant="outline" className="font-medium">
@@ -118,8 +118,8 @@ export const TeamOverviewContainer = ({
         <CardContent>
           {employees.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <p className="text-slate-500">No employees found</p>
+              <Users className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+              <p className="text-slate-500 dark:text-slate-400">No employees found</p>
             </div>
           ) : (
             <div className="space-y-4 w-full">
