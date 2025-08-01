@@ -32,6 +32,7 @@ export const FullHistoryModal = ({ employee, isOpen, onClose }: FullHistoryModal
     const loadAllActivities = async () => {
       if (employee?.id && isOpen) {
         setLoading(true);
+        setExpandedActivities(new Set()); // Reset expanded state
         try {
           const activities = await fetchUserActivities(employee.id);
           const sortedActivities = activities.sort(
@@ -48,11 +49,16 @@ export const FullHistoryModal = ({ employee, isOpen, onClose }: FullHistoryModal
         } finally {
           setLoading(false);
         }
+      } else if (!isOpen) {
+        // Clean up when modal closes
+        setAllActivities([]);
+        setExpandedActivities(new Set());
+        setLoading(false);
       }
     };
 
     loadAllActivities();
-  }, [employee, isOpen, fetchUserActivities, toast]);
+  }, [employee?.id, isOpen, fetchUserActivities, toast]);
 
   if (!employee) return null;
 

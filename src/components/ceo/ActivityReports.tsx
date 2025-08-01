@@ -1,6 +1,6 @@
 
 import { useToast } from "@/hooks/use-toast";
-import { generateDailyReport, generateWeeklyReport } from "@/utils/downloadUtils";
+import { generateCompanyDailyPDFReport, generateCompanyWeeklyPDFReport } from "@/utils/reports/companyPDFReportGenerator";
 import { useAuth } from "@/hooks/useAuth";
 import { useReports } from "@/hooks/useReports";
 import { useProfiles } from "@/hooks/useProfiles";
@@ -50,9 +50,9 @@ export const ActivityReports = () => {
       });
 
       if (report.type === "Daily Report") {
-        await generateDailyReport();
+        await generateCompanyDailyPDFReport();
       } else if (report.type === "Weekly Summary") {
-        await generateWeeklyReport();
+        await generateCompanyWeeklyPDFReport();
       }
 
       toast({

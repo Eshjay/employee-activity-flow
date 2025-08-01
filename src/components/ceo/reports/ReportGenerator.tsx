@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Calendar, FileText, Mail, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { generateDailyReport, generateWeeklyReport } from "@/utils/downloadUtils";
+import { generateCompanyDailyPDFReport, generateCompanyWeeklyPDFReport } from "@/utils/reports/companyPDFReportGenerator";
 import { sendDailyReminders } from "@/utils/emailUtils";
 
 interface ReportGeneratorProps {
@@ -26,11 +26,11 @@ export const ReportGenerator = ({ onReportGenerated }: ReportGeneratorProps) => 
     try {
       console.log(`Generating ${type} with real data`);
       
-      // Generate the actual file with real data
+      // Generate the actual PDF file with real data
       if (type === "Daily Report") {
-        await generateDailyReport();
+        await generateCompanyDailyPDFReport();
       } else if (type === "Weekly Summary") {
-        await generateWeeklyReport();
+        await generateCompanyWeeklyPDFReport();
       }
 
       // Add report to database

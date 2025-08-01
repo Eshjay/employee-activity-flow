@@ -91,8 +91,11 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
         description: "Creating daily activity report...",
       });
 
-      // Get today's activities for this employee
-      const todaysActivities = recentActivities.filter(
+      // Get all activities for this employee (not just recent ones)
+      const allEmployeeActivities = await fetchUserActivities(employee.id);
+      
+      // Filter for today's activities
+      const todaysActivities = allEmployeeActivities.filter(
         activity => {
           const activityDate = new Date(activity.date).toDateString();
           const today = new Date().toDateString();
@@ -100,11 +103,20 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
         }
       );
 
+      if (todaysActivities.length === 0) {
+        toast({
+          title: "No Activities Found",
+          description: "No activities found for today. Generating report with available data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await generateEmployeePDFReport(employee.name, todaysActivities, 'daily');
       
       toast({
         title: "PDF Report Generated",
-        description: `Daily report for ${employee.name} has been downloaded.`,
+        description: `Daily report for ${employee.name} has been downloaded (${todaysActivities.length} activities).`,
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -143,45 +155,45 @@ export const EmployeeDetailModal = ({ employee, isOpen, onClose, currentUserId }
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6">
               {/* Info Grid - Mobile Optimized */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <Mail className="w-4 h-4 text-blue-600" />
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-slate-100 dark:border-gray-600 shadow-subtle">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</p>
-                    <p className="text-responsive-sm font-medium text-slate-800 truncate">{employee.email}</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">Email</p>
+                    <p className="text-responsive-sm font-medium text-slate-800 dark:text-gray-200 truncate">{employee.email}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
-                  <div className="p-2 bg-emerald-50 rounded-lg">
-                    <Building2 className="w-4 h-4 text-emerald-600" />
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-slate-100 dark:border-gray-600 shadow-subtle">
+                  <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Department</p>
-                    <p className="text-responsive-sm font-medium text-slate-800 truncate">{employee.department}</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">Department</p>
+                    <p className="text-responsive-sm font-medium text-slate-800 dark:text-gray-200 truncate">{employee.department}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
-                  <div className="p-2 bg-amber-50 rounded-lg">
-                    <Calendar className="w-4 h-4 text-amber-600" />
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-slate-100 dark:border-gray-600 shadow-subtle">
+                  <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                    <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Last Activity</p>
-                    <p className="text-responsive-sm font-medium text-slate-800">
+                    <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">Last Activity</p>
+                    <p className="text-responsive-sm font-medium text-slate-800 dark:text-gray-200">
                       {employee.lastActivity ? new Date(employee.lastActivity).toLocaleDateString() : "—"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-subtle">
-                  <div className="p-2 bg-purple-50 rounded-lg">
-                    <TrendingUp className="w-4 h-4 text-purple-600" />
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-slate-100 dark:border-gray-600 shadow-subtle">
+                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">This Week</p>
-                    <p className="text-responsive-sm font-medium text-slate-800">{employee.activitiesThisWeek} activities</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide">This Week</p>
+                    <p className="text-responsive-sm font-medium text-slate-800 dark:text-gray-200">{employee.activitiesThisWeek} activities</p>
                   </div>
                 </div>
               </div>
