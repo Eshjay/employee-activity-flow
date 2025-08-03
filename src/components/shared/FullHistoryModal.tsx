@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, FileText, Download, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Clock, FileText, Download, X, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 import { useActivities, type Activity } from "@/hooks/useActivities";
 import { generateEmployeePDFReport } from "@/utils/reports/pdfReportGenerator";
 import { useToast } from "@/hooks/use-toast";
@@ -19,9 +19,10 @@ interface FullHistoryModalProps {
   employee: Employee | null;
   isOpen: boolean;
   onClose: () => void;
+  onBackToDetail?: () => void;
 }
 
-export const FullHistoryModal = ({ employee, isOpen, onClose }: FullHistoryModalProps) => {
+export const FullHistoryModal = ({ employee, isOpen, onClose, onBackToDetail }: FullHistoryModalProps) => {
   const [allActivities, setAllActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedActivities, setExpandedActivities] = useState<Set<string>>(new Set());
@@ -155,7 +156,7 @@ export const FullHistoryModal = ({ employee, isOpen, onClose }: FullHistoryModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in dark:bg-gray-900 dark:border-gray-700">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] p-0 overflow-hidden rounded-2xl shadow-strong animate-scale-in dark:bg-gray-900 dark:border-gray-700 z-60">
         <div className="flex flex-col h-full max-h-[85vh]">
           {/* Header */}
           <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-slate-100 dark:border-gray-700 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-gray-800 dark:to-gray-700">
@@ -168,14 +169,31 @@ export const FullHistoryModal = ({ employee, isOpen, onClose }: FullHistoryModal
                   All activities for {employee.name} • {allActivities.length} total entries
                 </DialogDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {onBackToDetail && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      onClose();
+                      setTimeout(() => {
+                        onBackToDetail();
+                      }, 150);
+                    }}
+                    className="text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </DialogHeader>
 
