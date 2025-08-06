@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardHeader } from "../shared/DashboardHeader";
+import { DailyQuote } from "../shared/DailyQuote";
 import { UserManagement } from "./UserManagement";
 import { DatabaseManagement } from "./DatabaseManagement";
 import { SystemSettings } from "./SystemSettings";
@@ -69,6 +70,9 @@ export const DeveloperDashboard = ({ user, onLogout }: DeveloperDashboardProps) 
             </Card>
           ))}
         </div>
+
+        {/* Daily Quote Section */}
+        <DailyQuote variant="compact" className="mb-4 sm:mb-6" />
 
         {/* Tab Navigation */}
         <div className={`${isMobile ? "flex flex-col gap-2" : "flex gap-4"} mb-4 sm:mb-6 ${isMobile ? "" : "overflow-x-auto"}`}>

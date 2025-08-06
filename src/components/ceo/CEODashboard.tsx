@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardHeader } from "../shared/DashboardHeader";
+import { DailyQuote } from "../shared/DailyQuote";
 import { TeamOverviewData } from "./TeamOverviewData";
 import { ActivityReports } from "./ActivityReports";
 import { EnhancedAnalytics } from "./EnhancedAnalytics";
@@ -131,6 +132,9 @@ export const CEODashboard = ({ user, onLogout }: CEODashboardProps) => {
             </Card>
           ))}
         </div>
+
+        {/* Daily Quote Section */}
+        <DailyQuote variant="hero" className="mb-6 sm:mb-8" />
 
         {/* Tab Navigation */}
         <div className={`mb-6 sm:mb-8 ${isMobile ? 'grid grid-cols-3 gap-2' : 'flex flex-wrap gap-3'}`}>

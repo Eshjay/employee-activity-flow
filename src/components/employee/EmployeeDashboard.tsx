@@ -7,6 +7,7 @@ import { ActivityForm } from "./ActivityForm";
 import { ActivityHistoryData } from "./ActivityHistoryData";
 import { DashboardHeader } from "../shared/DashboardHeader";
 import { MessagingSystemData } from "../shared/MessagingSystemData";
+import { DailyQuote } from "../shared/DailyQuote";
 import { TodoManagement } from "../todos/TodoManagement";
 import { TaskManagement } from "../tasks/TaskManagement";
 import { CheckCircle, Clock, Calendar, Mail, TrendingUp, CheckSquare, Briefcase } from "lucide-react";
@@ -139,6 +140,9 @@ export const EmployeeDashboard = ({ user, onLogout }: EmployeeDashboardProps) =>
             </div>
           </CardContent>
         </Card>
+
+        {/* Daily Quote Section */}
+        <DailyQuote className="mb-6 sm:mb-8" />
 
         {/* Enhanced Tab Navigation */}
         <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto">
