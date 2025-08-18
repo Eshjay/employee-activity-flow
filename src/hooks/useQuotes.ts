@@ -92,7 +92,16 @@ export const useQuotes = () => {
   const fetchQuoteFromAPI = async (): Promise<Quote> => {
     try {
       // Using Quotable API - free and doesn't require API key
-      const response = await fetch('https://api.quotable.io/random?minLength=20&maxLength=150&tags=motivational|inspirational|success|wisdom');
+      // Add cache-busting and bypass HTTP caches to ensure a fresh quote on manual refresh
+      const cacheBuster = Date.now();
+      const url = `https://api.quotable.io/random?minLength=20&maxLength=150&tags=motivational|inspirational|success|wisdom&_=${cacheBuster}`;
+      const response = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
