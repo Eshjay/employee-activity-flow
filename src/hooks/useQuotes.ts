@@ -122,6 +122,17 @@ export const useQuotes = () => {
     }
   };
 
+  // Try to get a quote different from the provided texts, retrying a few times to improve freshness
+  const fetchUniqueQuote = async (avoidTexts: string[] = [], maxAttempts = 3): Promise<Quote> => {
+    let attempt = 0;
+    let last: Quote = await fetchQuoteFromAPI();
+    while (attempt < maxAttempts && avoidTexts.includes(last.text)) {
+      attempt++;
+      last = await fetchQuoteFromAPI();
+    }
+    return last;
+  };
+
   // Main function to get daily quote
   const fetchDailyQuote = async () => {
     setLoading(true);
@@ -138,8 +149,9 @@ export const useQuotes = () => {
         }
       }
 
-      // Fetch new quote
-      const newQuote = await fetchQuoteFromAPI();
+      // Fetch new quote, try to avoid repeating the previously stored one
+      const previous = getStoredQuote();
+      const newQuote = await fetchUniqueQuote(previous ? [previous.text] : []);
       setQuote(newQuote);
       storeQuote(newQuote);
     } catch (err) {
@@ -160,7 +172,14 @@ export const useQuotes = () => {
     // Clear stored data to force new fetch
     localStorage.removeItem(QUOTE_STORAGE_KEY);
     localStorage.removeItem(QUOTE_DATE_KEY);
-    await fetchDailyQuote();
+
+    // Try to avoid immediately repeating the on-screen quote during manual refreshes
+    const currentText = quote?.text ? [quote.text] : [];
+    setLoading(true);
+    const newQuote = await fetchUniqueQuote(currentText);
+    setQuote(newQuote);
+    storeQuote(newQuote);
+    setLoading(false);
   };
 
   useEffect(() => {

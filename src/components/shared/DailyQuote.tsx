@@ -53,7 +53,7 @@ export const DailyQuote = ({ variant = 'default', className = '' }: DailyQuotePr
             </div>
             <div className="flex-1 min-w-0">
               <blockquote className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-2 italic">
-                "{quote.text}"
+                &ldquo;{quote.text}&rdquo;
               </blockquote>
               <div className="flex items-center justify-between">
                 <cite className="text-xs text-slate-500 dark:text-slate-400 font-medium not-italic">
@@ -91,7 +91,7 @@ export const DailyQuote = ({ variant = 'default', className = '' }: DailyQuotePr
             </div>
             
             <blockquote className="text-lg sm:text-xl lg:text-2xl text-slate-800 dark:text-slate-200 leading-relaxed mb-4 sm:mb-6 font-medium italic text-balance">
-              "{quote.text}"
+              &ldquo;{quote.text}&rdquo;
             </blockquote>
             
             <div className="flex items-center justify-center gap-4">
@@ -145,7 +145,7 @@ export const DailyQuote = ({ variant = 'default', className = '' }: DailyQuotePr
             </div>
             
             <blockquote className="text-responsive-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3 sm:mb-4 italic">
-              "{quote.text}"
+              &ldquo;{quote.text}&rdquo;
             </blockquote>
             
             <div className="flex items-center justify-between">
